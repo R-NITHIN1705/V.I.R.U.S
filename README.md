@@ -1,377 +1,487 @@
-## Features
+# 🧠 V.I.R.U.S.
+### **Verified Intelligence & Real-time Unified Stories**
 
-- **RSS/Atom feed aggregation** from configurable sources
-- **AI-powered categorization & summarization** via OpenRouter free models (with rule-based fallback)
-- **Keyword extraction** — AI-extracted entities (people, orgs, places) displayed as tags, searchable
-- **Keyword quality filter** — removes noise tokens, keeps named entities
-- **Multi-language translation** — translates articles to all configured display languages (EN/DE/FR) with client-side language selector; originals preserved
-- **Smart alerts** with keyword and AI-based evaluation
-- **Alert rule fixtures** — define alert strategies in YAML files, load via CLI
-- **Periodic digests** with AI-generated editorial summaries
-- **Full-text search** via SEAL + Loupe (zero infrastructure, SQLite-based) with auto-reindexing
-- **Inline article filter** — client-side search-as-you-type on the dashboard
-- **Sentiment scoring** — AI-extracted sentiment (-1.0 to +1.0) at zero extra cost, with rule-based keyword fallback
-- **Sentiment slider** — navbar range control (-10 to +10) re-ranks articles by mood; extreme values filter opposite sentiment; chat tone adapts
-- **Article scoring & ranking** based on recency, source reliability, and category weights
-- **Score explanation tooltip** — hover to see scoring breakdown
-- **Article bookmarks** — save for later, persist per-user, filter dashboard
-- **Deduplication** across sources (URL, title similarity, content fingerprint)
-- **OPML import and export** — bulk source management with duplicate detection
-- **Full-text article fetch (Readability)** — Phase 1.5 pipeline with per-domain rate limiting and per-source toggle
-- **Real-time updates via Mercure SSE** — new articles banner, in-place enrichment updates
-- **htmx** — declarative partial page updates, no-reload filtering, inline actions
-- **Health check endpoint** (`/health`) — container orchestration, no auth required
-- **Settings UI** — runtime configuration of display languages, fetch interval, retention periods
-- **Dynamic paid model routing** — automatic acceleration when enrichment queue is deep
-- **Data retention** with configurable cleanup intervals
-- **Scheduled maintenance** — daily search reindex + cleanup via Symfony Scheduler
-- Single-user auth, multi-user ready architecture
+> **One world. Thousands of sources. One intelligent view of the story.**
 
-## Tech Stack
+V.I.R.U.S. is an intelligent, real-time news intelligence platform designed to bring fragmented information from multiple sources into a single unified experience.
 
-- **Backend**: Symfony 8.0, PHP 8.4, Doctrine ORM
-- **Server**: FrankenPHP + Caddy (automatic HTTPS, HTTP/3)
-- **Database**: PostgreSQL 17 + PgBouncer (connection pooling)
-- **Frontend**: Twig + DaisyUI + plain TypeScript (via Bun + AssetMapper)
-- **AI**: Symfony AI Bundle + OpenRouter (free models, ModelFailoverPlatform)
-- **Search**: SEAL + Loupe (SQLite-based, swap to Meilisearch later)
-- **Async**: Symfony Messenger (Doctrine transport)
-- **Monitoring**: Ember (Caddy/FrankenPHP metrics TUI)
+Instead of forcing users to jump between publishers, tabs, apps, and social feeds, V.I.R.U.S. continuously collects, processes, enriches, organizes, verifies, and presents news in a way that helps users understand **what happened, what is happening, and what matters.**
 
-## Requirements
+**V.I.R.U.S. = Verified Intelligence + Real-time Information + Unified Stories.**
 
-- Docker & Docker Compose v2
-- (Optional) OpenRouter API key for AI features
+---
 
-## Quick Start
+## 🌍 What is V.I.R.U.S.?
 
-### Option A: Pull from GHCR (recommended)
+Modern news consumption is fragmented.
 
-```bash
-# Pull the latest image
-docker pull ghcr.io/tony-stark-eth/news-aggregator:latest
+A single event can appear simultaneously across national media, international publications, regional sources, technology websites, business publications, sports outlets, and independent publishers — often with different headlines, perspectives, levels of detail, and timestamps.
 
-# Download the compose files
-curl -O https://raw.githubusercontent.com/tony-stark-eth/news-aggregator/main/compose.yaml
-curl -O https://raw.githubusercontent.com/tony-stark-eth/news-aggregator/main/compose.prod.yaml
+V.I.R.U.S. brings these stories together.
 
-# Copy and edit env
-curl -O https://raw.githubusercontent.com/tony-stark-eth/news-aggregator/main/.env.example
-cp .env.example .env.local
-# Edit .env.local: set ADMIN_EMAIL, ADMIN_PASSWORD_HASH, and optionally OPENROUTER_API_KEY
+### The platform is built around five principles:
 
-# Start
-docker compose -f compose.yaml -f compose.prod.yaml up -d
+**🔴 Real-time**  
+Continuously discover and surface new stories.
 
-# Access at https://localhost:8443
-```
+**🧠 Intelligent**  
+Use AI to categorize, summarize, extract entities, analyze sentiment, and enrich articles.
 
-### Option B: Build from source
+**🔎 Unified**  
+Combine stories from multiple sources into one searchable information layer.
 
-```bash
-git clone https://github.com/tony-stark-eth/news-aggregator.git
-cd news-aggregator
-cp .env.example .env.local
-# Edit .env.local
-make start
+**✅ Verification-oriented**  
+Help users compare information across sources instead of relying on a single headline.
 
-# Access at https://localhost:8443
-# (Accept the self-signed certificate on first visit)
-```
+**🎯 Personalized**  
+Let users control what they see through categories, bookmarks, alerts, sentiment preferences, and source selection.
 
-## Configuration
+---
 
-Copy `.env.example` to `.env.local` and adjust:
+# ✨ Core Experience
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `ADMIN_EMAIL` | Admin login email | `admin@example.com` |
-| `ADMIN_PASSWORD_HASH` | Bcrypt hash of admin password | `$2y$13$...` |
-| `OPENROUTER_API_KEY` | OpenRouter API key (optional) | `sk-or-...` |
-| `OPENROUTER_PAID_FALLBACK_MODEL` | Paid model added to end of failover chain | `google/gemini-2.5-flash-lite` |
-| `OPENROUTER_BLOCKED_MODELS` | Comma-separated blocked model IDs | (empty) |
-| `NOTIFIER_CHATTER_DSN` | Notification transport DSN | see below |
-| `FETCH_DEFAULT_INTERVAL_MINUTES` | How often to fetch feeds | `60` |
-| `DISPLAY_LANGUAGES` | Comma-separated display languages | `en` |
-| `MERCURE_URL` | Internal Mercure hub URL (for publishing) | `https://php/.well-known/mercure` |
-| `MERCURE_PUBLIC_URL` | Public Mercure hub URL (for browser SSE) | `https://localhost:8443/.well-known/mercure` |
-| `MERCURE_JWT_SECRET` | JWT secret for Mercure publishing | `!ChangeThisMercureHubJWTSecretKey!` |
-| `QUEUE_ACCELERATE_THRESHOLD` | Queue depth to start using paid model | `20` |
-| `QUEUE_SKIP_FREE_THRESHOLD` | Queue depth to skip free models entirely | `50` |
-| `FULL_TEXT_FETCH_ENABLED` | Enable full-text article fetching | `true` |
-| `FULL_TEXT_FETCH_TIMEOUT` | HTTP timeout for full-text fetch (seconds) | `15` |
-| `FULL_TEXT_RATE_LIMIT_REQUESTS` | Max requests per domain in rate limit window | `2` |
-| `FULL_TEXT_RATE_LIMIT_INTERVAL` | Rate limit sliding window (seconds) | `5` |
-| `RETENTION_ARTICLES` | Article retention period | `90` |
-| `RETENTION_LOGS` | Notification/digest log retention | `30` |
+## 📰 Multi-Source News Aggregation
 
-Generate `ADMIN_PASSWORD_HASH`:
-```bash
-docker compose exec php php bin/console security:hash-password
-```
+V.I.R.U.S. collects articles from configurable news sources using RSS/Atom feeds and brings them into a centralized news stream.
 
-## Notification Setup
+Sources can include:
 
-Notifications use Symfony Notifier. Install a transport package, then set the DSN.
+- National news
+- International news
+- Regional/state news
+- Technology
+- Business
+- Politics
+- Science
+- Sports
+- Entertainment
+- Other specialized publishers
 
-### Popular transports
+Users don't need to visit every publisher individually.
 
-```bash
-# Pushover (recommended for Android)
-composer require symfony/pushover-notifier
-# DSN: pushover://USER_KEY@TOKEN
+**V.I.R.U.S. becomes the unified layer between the reader and the fragmented news ecosystem.**
 
-# Telegram
-composer require symfony/telegram-notifier
-# DSN: telegram://BOT_TOKEN@default?channel=CHAT_ID
+---
 
-# Slack
-composer require symfony/slack-notifier
-# DSN: slack://TOKEN@default?channel=CHANNEL
+## 🌐 The V.I.R.U.S. World Interface
 
-# Discord
-composer require symfony/discord-notifier
-# DSN: discord://TOKEN@default?webhook_id=ID&webhook_token=TOKEN
+The platform is designed around an interactive information experience rather than a traditional static news website.
 
-# Email (via Mailer)
-composer require symfony/mailer
-# DSN: mailto://from@example.com?to=you@example.com
-```
+The interface can surface:
 
-Set in `.env.local`:
-```dotenv
-NOTIFIER_CHATTER_DSN=pushover://USER_KEY@TOKEN
-```
+- 🔴 Breaking stories
+- 🔥 Trending stories
+- 🆕 Latest stories
+- 🌍 Global developments
+- 🇮🇳 National news
+- 📍 Regional stories
+- 💻 Technology
+- 💰 Business
+- 🏛️ Politics
+- ⚽ Sports
+- 🎬 Entertainment
 
-## Alert Rules
+The goal is to make the news feel like a **live information environment**, not simply a list of articles.
 
-Alert rules watch incoming articles and send notifications when matched. All alert matches are logged to the notification log regardless of whether a notification transport is configured. The log shows delivery status: **sent** (green), **skipped** (gray, no transport), or **failed** (red).
+---
 
-### Loading from fixtures
+# 🤖 AI-Powered Intelligence
 
-Define alert strategies in YAML and load them via CLI:
-
-```bash
-make sf c="app:load-alert-rules fixtures/alert-rules/portfolio.yaml"
-make sf c="app:load-alert-rules fixtures/alert-rules/"  # load all files in directory
-make sf c="app:load-alert-rules fixtures/alert-rules/portfolio.yaml --dry-run"  # preview
-make sf c="app:load-alert-rules fixtures/alert-rules/portfolio.yaml --purge"    # remove rules not in file
-```
-
-Fixture format (`fixtures/alert-rules/portfolio.yaml`):
-```yaml
-- name: "Hormuz De-escalation"
-  type: ai
-  keywords: ["hormuz ceasefire", "iran diplomacy", "iran peace deal"]
-  context_prompt: "I hold CF Industries and K+S stocks that profit from the Hormuz blockade..."
-  urgency: high
-  severity_threshold: 6
-  cooldown_minutes: 30
-```
-
-### Creating via UI
-
-Navigate to **Alerts** in the sidebar. Each rule has a **type**:
-
-| Type | Behavior |
-|------|----------|
-| `keyword` | Matches if any keyword appears in title/summary. Fast, no AI calls. |
-| `ai` | Sends all articles to AI for evaluation against a context prompt. |
-| `both` | Keyword match first, then AI confirms on keyword hits only (~10-20 AI calls/day). |
-
-### Creating an alert rule
-
-Navigate to **Alerts** in the sidebar, then:
-
-1. Enter a **name** (e.g. "AI funding news")
-2. Choose **type**: `keyword`, `ai`, or `both`
-3. **Keywords** (for `keyword`/`both`): comma-separated terms, e.g. `OpenAI, Anthropic, funding round`
-4. **Categories**: optionally restrict to specific categories
-5. **Context prompt** (for `ai`/`both`): describe what to match, e.g.:
-   > "Alert me when there is news about AI startup funding rounds over $10M. Ignore incremental product updates."
-6. **Urgency**: `normal` or `high` (high = immediate notification)
-
-## Digest Configuration
-
-Digests are periodic AI-generated editorial summaries. Navigate to **Digests** to manage configurations.
-
-![Digests page](docs/screenshots/digests.png)
-
-| Setting | Description |
-|---------|-------------|
-| **Cron expression** | When to generate, e.g. `0 8 * * *` (daily 8am) |
-| **Categories** | Which categories to include (leave empty for all) |
-| **Max articles** | How many articles to summarize (default: 10) |
-| **Enabled** | Toggle digest on/off without deleting it |
-
-Full CRUD: create, edit, and delete digest configurations from the UI. Use the **Run Now** button to trigger a digest on demand without waiting for the schedule. View past digest content and included articles from the history section.
-
-The digest processor runs every 5 minutes and checks which schedules are due.
-
-## AI Integration
-
-AI features use [OpenRouter](https://openrouter.ai) free models via `symfony/ai-bundle`.
-
-- **No API key required** — the system falls back to rule-based categorization/summarization.
-- **Primary model**: `openrouter/free` — auto-routes to the best available free model.
-- **Failover chain**: If `openrouter/free` is unavailable, `ModelFailoverPlatform` tries minimax, glm, gpt-oss, qwen, and nemotron in sequence.
-- **Quality gates**: AI responses are validated for structure and confidence (>= 0.7). Low-confidence results fall back to rule-based output.
-- **Keyword-first alerts**: For `both`-type rules, AI is only invoked on keyword matches — typically 10-20 AI calls per day.
-- **Blocked models**: Set `OPENROUTER_BLOCKED_MODELS=model-id-1,model-id-2` to permanently skip unreliable models.
-- **Stats**: Run `make sf c="app:ai-stats"` to see model quality metrics.
+Every incoming article can pass through an enrichment pipeline that transforms raw feed data into structured intelligence.
 
 ### AI enrichment pipeline
 
-Each fetched article goes through this pipeline:
-
-1. **Categorization** — assigns a category (politics, tech, business, science, sports)
-2. **Summarization** — generates a 1-2 sentence summary
-3. **Keyword extraction** — extracts 3-5 key entities (people, organizations, places, topics)
-4. **Sentiment scoring** — extracts sentiment from -1.0 to +1.0 (zero extra cost, same API call)
-5. **Translation** — translates title and summary if the source language differs from English
-
-All four steps use the same decorator pattern: AI tries first, rule-based fallback on failure. Keywords and translations are stored alongside the original content.
-
-### Source language & translation
-
-Sources have a `language` field (e.g. `de`, `en`). When a source's language is not English, the AI translates the title and summary after enrichment. The original text is preserved (`titleOriginal`, `summaryOriginal`) and shown via a tooltip on the article card.
-
-Add a language when creating a source in the UI, or set it in the seed data.
-
-## Search
-
-Articles are indexed via SEAL + Loupe (SQLite-based, zero infrastructure). Search covers title, content, summary, source name, category, and extracted keywords.
-
-- **Navbar search** — full-text search via `/search?q=...`
-- **Inline filter** — type in the filter input above the dashboard article list for instant client-side filtering
-- **Auto-reindex** — new articles are indexed automatically via a Doctrine event listener. A daily full reindex runs as a safety net via the maintenance scheduler.
-- **Manual reindex**: `make sf c="app:search-reindex"`
-
-## Article Bookmarking
-
-Save articles for later reading with a single click. Bookmarks are persisted per-user and survive article cleanup. The dashboard includes a bookmark filter to show only saved articles.
-
-![Dashboard with bookmarks](docs/screenshots/dashboard-bookmarks.png)
-
-## OPML Import & Export
-
-Manage sources in bulk via standard OPML files. Import feeds from other readers (Miniflux, FreshRSS, Feedly exports) — duplicate URLs are detected and skipped. Export your current sources as OPML to back up or migrate to another reader.
-
-![OPML import](docs/screenshots/opml-import.png)
-
-Navigate to **Sources** and use the Import/Export buttons.
-
-## Real-time Updates
-
-New articles and enrichment completions are pushed to the browser in real time via Mercure SSE (Server-Sent Events), built into FrankenPHP/Caddy with zero additional infrastructure.
-
-- **New articles banner** — appears when new articles arrive while you are reading
-- **In-place enrichment** — article cards update live when AI enrichment completes (category, summary, keywords appear without page reload)
-
-The browser connects via the native `EventSource` API. No WebSocket server or polling required.
-
-## Full-text Article Fetch
-
-Articles are fetched in full text during Phase 1.5 of the enrichment pipeline using Mozilla Readability. This runs between feed parsing and AI enrichment, so the AI receives the complete article text rather than a truncated RSS snippet.
-
-- **Per-source toggle** — enable or disable full-text fetch on each source
-- **Per-domain rate limiting** — configurable sliding window to respect publisher limits
-- **Graceful fallback** — if full-text fetch fails, the original feed content is used
-
-## Health Check
-
-A lightweight endpoint at `/health` returns system status without requiring authentication. Useful for Docker health checks and container orchestration.
-
-```bash
-curl -k https://localhost:8443/health
-# {"status":"ok","checks":{"database":"ok","messenger":"ok"}}
+```text
+Incoming Article
+       ↓
+Source Processing
+       ↓
+Deduplication
+       ↓
+Full-Text Extraction
+       ↓
+AI Categorization
+       ↓
+AI Summarization
+       ↓
+Entity / Keyword Extraction
+       ↓
+Sentiment Analysis
+       ↓
+Translation
+       ↓
+Scoring & Ranking
+       ↓
+V.I.R.U.S. Feed
 ```
 
-## Settings
+### AI capabilities
 
-Runtime configuration is available at **Settings** in the sidebar. Settings use a hybrid approach: environment variables set defaults, and the UI allows overriding them at runtime without restarting containers.
+**Categorization**
 
-![Settings page](docs/screenshots/settings.png)
+Automatically classify stories into categories such as:
 
-Configurable values include display languages, fetch interval, article retention period, and log retention period.
+- Politics
+- Technology
+- Business
+- Science
+- Sports
+- Entertainment
 
-## Sentiment Slider
+**Summarization**
 
-Every article receives a sentiment score from -1.0 (negative) to +1.0 (positive) during AI enrichment -- extracted in the same API call at zero extra cost. Articles without AI enrichment use a rule-based fallback with ~30 positive/negative keyword lists (title weighted 2x, capped at +/-0.8).
+Convert lengthy articles into concise summaries so users can understand the story faster.
 
-The navbar slider controls how sentiment affects your reading experience:
+**Entity extraction**
 
-| Slider Value | Behavior |
-|-------------|----------|
-| 0 (center) | No sentiment influence -- default ranking |
-| +/-1 to +/-5 | Boost articles matching your preferred sentiment |
-| +/-6 to +/-10 | Boost matching sentiment AND filter out opposite articles |
+Identify important:
 
-![Sentiment slider positive](docs/screenshots/sentiment-slider-positive.png)
+- People
+- Organizations
+- Places
+- Topics
 
-The chat assistant also adapts its tone: hopeful and solution-focused at +4 and above, critical and risk-focused at -4 and below.
+and make them searchable.
 
-Backfill existing articles:
-```bash
-make sf c="app:backfill-sentiment"
+**Sentiment analysis**
+
+Articles receive a sentiment score from:
+
+```text
+-1.0  ← Negative | Neutral | Positive →  +1.0
 ```
 
-Monitor progress on the Pipeline Status page (`/settings/pipelines`).
+**Translation**
 
-## Data Retention
+When supported, articles can be translated while preserving the original content.
 
-Old articles and logs are pruned automatically by the `app:cleanup` command (run daily via the maintenance scheduler).
+**Fallback intelligence**
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `RETENTION_ARTICLES` | `90` | Articles older than this are deleted |
-| `RETENTION_LOGS` | `30` | Notification and digest logs older than this are deleted |
+AI failures do not stop the pipeline. Rule-based processing can provide fallback categorization, summarization, sentiment, and related processing.
 
-Run manually:
-```bash
-make sf c="app:cleanup"
+---
+
+# 🔍 Intelligent Search
+
+V.I.R.U.S. is designed to make the entire collected news ecosystem searchable.
+
+Search can cover:
+
+- Article titles
+- Article content
+- Summaries
+- Sources
+- Categories
+- Extracted keywords/entities
+
+Users can search for a topic and discover relevant stories across multiple sources rather than searching publisher by publisher.
+
+### Search architecture
+
+```text
+User Query
+    ↓
+Search Engine
+    ↓
+Articles + Metadata
+    ↓
+Ranking
+    ↓
+Relevant Stories
 ```
 
-## Architecture
+---
 
-Domain-driven design with bounded contexts. See [docs/architecture.md](docs/architecture.md) for the full diagram.
+# 🧩 Story Deduplication
 
+The same event can be reported by dozens of publishers.
+
+V.I.R.U.S. identifies potential duplicates using multiple signals including:
+
+- URL matching
+- Title similarity
+- Content fingerprints
+
+This reduces repetitive stories and keeps the information feed cleaner.
+
+---
+
+# 🕸️ Related Story Intelligence
+
+Multiple articles can describe different aspects of the same event.
+
+V.I.R.U.S. can bring related coverage together so users can explore a story from multiple sources and perspectives.
+
+Instead of:
+
+```text
+Article A
+Article B
+Article C
+Article D
 ```
-Article    → core articles, scoring, deduplication
-Source     → feed management, fetching, health tracking
-Enrichment → rule-based + AI categorization/summarization/sentiment
-Notification → unified alert rules + Notifier dispatch
-Digest     → periodic AI-generated editorial summaries
-User       → authentication, per-user read state
-Shared     → AI infra, search, categories, cleanup commands
+
+the experience moves toward:
+
+```text
+                 ┌─ Source A
+                 │
+EVENT / STORY ───┼─ Source B
+                 │
+                 ├─ Source C
+                 │
+                 └─ Source D
 ```
 
-See [docs/article-lifecycle.md](docs/article-lifecycle.md) for the article pipeline diagram.
+This creates a more useful way to understand developing events.
 
-## Development
+---
 
-```bash
-make up              # Start containers
-make down            # Stop containers
-make sh              # Shell into PHP container
-make quality         # Run all quality checks (ECS + PHPStan + Rector)
-make test            # Run all tests
-make test-unit       # Run unit tests
-make test-integration # Run integration tests
-make infection       # Run mutation testing
-make coverage        # Generate coverage report
-make hooks           # Install git hooks
-make ts-build        # Compile TypeScript
+# ✅ Verification-Oriented News
+
+V.I.R.U.S. is built with a **verification-first mindset**.
+
+The platform does not simply ask:
+
+> "What is the headline?"
+
+It aims to help answer:
+
+> **"What information is available, who is reporting it, and how does the coverage compare?"**
+
+Users can explore multiple sources around a story and use the platform's intelligence layer to understand the information landscape.
+
+### Verification workflow
+
+```text
+Multiple Sources
+       ↓
+Collect
+       ↓
+Normalize
+       ↓
+Deduplicate
+       ↓
+Group Related Stories
+       ↓
+Compare Coverage
+       ↓
+AI-Assisted Analysis
+       ↓
+User Verification
 ```
 
-## Contributing
+> **Important:** AI enrichment assists discovery and analysis; it does not replace the original publisher or independent verification.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+---
 
-## Security
+# 🔥 Breaking • Trending • Latest
 
-See [SECURITY.md](SECURITY.md) for the vulnerability disclosure policy.
+V.I.R.U.S. separates information based on relevance and recency.
 
-## License
+### 🔴 Breaking
 
-[MIT](LICENSE)
+Stories requiring immediate attention.
+
+### 🔥 Trending
+
+Stories gaining significant attention across the information ecosystem.
+
+### 🆕 Latest
+
+The newest available stories from configured sources.
+
+This gives users multiple ways to navigate the news instead of relying solely on chronological ordering.
+
+---
+
+# 📊 Intelligent Article Ranking
+
+Articles can be ranked using multiple signals including:
+
+- Recency
+- Source reliability
+- Category relevance
+- Article metadata
+- User preferences
+- Sentiment preference
+
+The platform can also provide a score explanation so users can understand why an article was ranked where it was.
+
+---
+
+# 🎚️ Personalized Sentiment Experience
+
+V.I.R.U.S. includes a sentiment-based reading control.
+
+The sentiment slider can influence how articles are ranked.
+
+```text
+-10 ───────── 0 ───────── +10
+Negative     Neutral      Positive
+```
+
+### Behavior
+
+| Range | Behavior |
+|---|---|
+| `0` | Default ranking |
+| `±1 → ±5` | Boost preferred sentiment |
+| `±6 → ±10` | Boost preferred sentiment and filter opposing sentiment |
+
+The assistant experience can also adapt its tone based on the selected sentiment preference.
+
+---
+
+# 🔔 Smart Alerts
+
+Users can create alert rules for topics that matter to them.
+
+Alert types include:
+
+| Type | Description |
+|---|---|
+| `keyword` | Fast keyword-based matching |
+| `ai` | AI evaluates articles against a context |
+| `both` | Keyword filtering followed by AI confirmation |
+
+Example:
+
+```text
+Alert:
+AI startup funding
+
+Keywords:
+OpenAI, Anthropic, funding round
+
+Context:
+Alert me about significant AI startup
+funding rounds and ignore minor updates.
+```
+
+Alert matches are logged with delivery status so users can understand what happened.
+
+---
+
+# 📨 Intelligent Digests
+
+V.I.R.U.S. can generate periodic AI-powered news digests.
+
+Users can configure:
+
+- Schedule
+- Categories
+- Maximum number of articles
+- Enabled/disabled state
+
+A digest can transform many individual stories into a concise editorial-style briefing.
+
+```text
+Raw News
+   ↓
+Relevant Stories
+   ↓
+AI Analysis
+   ↓
+Editorial Summary
+   ↓
+News Digest
+```
+
+---
+
+# ⚡ Real-Time News
+
+V.I.R.U.S. is designed around continuously changing information.
+
+Real-time infrastructure can push:
+
+- New articles
+- Enrichment updates
+- Category changes
+- Summaries
+- Keywords
+- Other article updates
+
+without requiring a full page refresh.
+
+### Real-time flow
+
+```text
+News Source
+     ↓
+Fetcher
+     ↓
+Processing Pipeline
+     ↓
+Database
+     ↓
+Event / SSE Layer
+     ↓
+Browser
+     ↓
+Live UI Update
+```
+
+---
+
+# 📖 Full-Text Intelligence
+
+RSS feeds often contain incomplete article content.
+
+V.I.R.U.S. can use full-text extraction to provide the AI pipeline with richer article content.
+
+### Pipeline
+
+```text
+RSS Article
+     ↓
+Full-Text Extraction
+     ↓
+Complete Article Content
+     ↓
+AI Enrichment
+```
+
+The system includes:
+
+- Per-source controls
+- Domain rate limiting
+- Configurable timeout
+- Graceful fallback to feed content
+
+---
+
+# 🔖 Bookmarks
+
+Users can save important articles for later.
+
+Bookmarks:
+
+- Persist per user
+- Survive article cleanup
+- Can be filtered from the dashboard
+
+This allows V.I.R.U.S. to function not only as a news feed, but also as a personal information library.
+
+---
+
+# 📡 Source Management
+
+V.I.R.U.S. supports configurable news sources and bulk source management.
+
+### OPML support
+
+Sources can be:
+
+- Imported from OPML
+- Exported to OPML
+- Deduplicated automatically
+
+This makes migration from other feed readers easier.
+
+---
+
+# ⚙️ Runtime Configuration
+
+Important platform behavior can be
