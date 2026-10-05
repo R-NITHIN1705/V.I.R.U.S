@@ -1,25 +1,3 @@
-# News Aggregator
-
-[![CI](https://github.com/tony-stark-eth/news-aggregator/actions/workflows/ci.yml/badge.svg)](https://github.com/tony-stark-eth/news-aggregator/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![PHP 8.4](https://img.shields.io/badge/PHP-8.4-blue.svg)](https://php.net)
-
-Self-hosted, AI-enhanced RSS/Atom news aggregator built with Symfony 8 + FrankenPHP.
-
-![Dashboard](docs/screenshots/dashboard.png)
-
-| ![Alerts](docs/screenshots/alerts.png) | ![Mobile](docs/screenshots/dashboard-mobile.png) |
-|---|---|
-| Alert rules with portfolio monitoring | Mobile-responsive layout |
-
-| ![Sentiment positive](docs/screenshots/sentiment-slider-positive.png) | ![Sentiment negative](docs/screenshots/sentiment-slider-negative.png) |
-|---|---|
-| Sentiment slider at +10 (optimistic) | Sentiment slider at -10 (critical) |
-
-| ![Chat](docs/screenshots/chat-working-with-sources.png) | ![Pipeline status](docs/screenshots/pipeline-sentiment-section.png) |
-|---|---|
-| RAG chat assistant with article sources | Pipeline status with sentiment scoring |
-
 ## Features
 
 - **RSS/Atom feed aggregation** from configurable sources
