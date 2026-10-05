@@ -1,0 +1,69 @@
+{% extends 'base.html.twig' %}
+
+{% block sidebar %}{% endblock %}
+
+{% block title %}Login{% endblock %}
+
+{% block body %}
+
+<div class="flex items-center justify-center min-h-[72vh] px-3 py-8">
+    <div class="card w-full max-w-md bg-base-100 shadow-2xl border border-base-300">
+        <div class="card-body">
+            <h2 class="card-title text-2xl">Welcome back</h2>
+            <p class="text-base-content/70">Sign in to continue to your news desk.</p>
+
+            {% if error %}
+                <div class="alert alert-error">
+                    {{ error.messageKey|trans(error.messageData, 'security') }}
+                </div>
+            {% endif %}
+
+            <form method="post" action="{{ path('app_login') }}" class="space-y-4" data-auth-form>
+
+                <div>
+                    <label for="username" class="label">
+                        <span class="label-text">Email</span>
+                    </label>
+                    <input
+                        type="email"
+                        id="username"
+                        name="_username"
+                        value="{{ last_username }}"
+                        required
+                        autocomplete="email"
+                        class="input input-bordered w-full"
+                        autofocus
+                    >
+                </div>
+
+                <div>
+                    <label for="password" class="label">
+                        <span class="label-text">Password</span>
+                    </label>
+                    <div class="join w-full">
+                    <input
+                        type="password"
+                        id="password"
+                        name="_password"
+                        required
+                        autocomplete="current-password"
+                        class="input input-bordered join-item w-full"
+                    >
+                    <button type="button" class="btn btn-outline join-item" data-password-toggle aria-label="Show password">Show</button>
+                    </div>
+                    <div class="text-right mt-1"><a class="link link-primary text-sm" href="{{ path('app_forgot_password') }}">Forgot password?</a></div>
+                </div>
+
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                <button type="submit" class="btn btn-primary w-full">
+                    <span data-submit-label>Sign In</span><span class="loading loading-spinner loading-sm hidden" data-submit-spinner></span>
+                </button>
+
+            </form>
+            <p class="text-center text-sm mt-2">Don't have an account? <a class="link link-primary" href="{{ path('app_register') }}">Sign up</a></p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

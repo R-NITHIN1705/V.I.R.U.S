@@ -1,0 +1,93 @@
+---
+# Development environment override
+services:
+  php:
+    image: ${IMAGES_PREFIX:-}app-php-dev
+    build:
+      context: .
+      target: frankenphp_dev
+    volumes:
+      - ./:/app
+      - ./frankenphp/Caddyfile:/etc/frankenphp/Caddyfile:ro
+      - ./frankenphp/conf.d/20-app.dev.ini:/usr/local/etc/php/app.conf.d/20-app.dev.ini:ro
+    environment:
+      CADDY_SERVER_EXTRA_DIRECTIVES: "${CADDY_SERVER_EXTRA_DIRECTIVES:-}"
+      FRANKENPHP_WORKER_CONFIG: watch
+      FRANKENPHP_SITE_CONFIG: hot_reload
+      MERCURE_EXTRA_DIRECTIVES: demo
+      XDEBUG_MODE: "${XDEBUG_MODE:-develop}"
+      APP_ENV: "${APP_ENV:-dev}"
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    tty: true
+
+  worker:
+    image: ${IMAGES_PREFIX:-}app-php-dev
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=${POSTGRES_VERSION:-17}&charset=${POSTGRES_CHARSET:-utf8}
+      APP_ENV: "${APP_ENV:-dev}"
+      APP_DEBUG: "0"
+    command: ["sh", "-c", "php bin/console cache:clear --no-warmup -q && php bin/console cache:warmup -q && php bin/console messenger:consume async scheduler_fetch --time-limit=3600 --memory-limit=128M -vv"]
+    healthcheck:
+      test: ["CMD-SHELL", "ps -ef | grep -F '[m]essenger:consume async scheduler_fetch' >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      - php
+
+  enrichment-worker:
+    image: ${IMAGES_PREFIX:-}app-php-dev
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=${POSTGRES_VERSION:-17}&charset=${POSTGRES_CHARSET:-utf8}
+      APP_ENV: "${APP_ENV:-dev}"
+      APP_DEBUG: "0"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      OPENROUTER_BASE_URL: "${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}"
+      MERCURE_URL: "https://php/.well-known/mercure"
+      MERCURE_JWT_SECRET: "${MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}"
+    command: ["sh", "-c", "php bin/console cache:clear --no-warmup -q && php bin/console cache:warmup -q && php bin/console messenger:consume async_enrich --time-limit=3600 --memory-limit=256M -vv"]
+    healthcheck:
+      test: ["CMD-SHELL", "ps -ef | grep -F '[m]essenger:consume async_enrich' >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      - php
+
+  fulltext-worker:
+    image: ${IMAGES_PREFIX:-}app-php-dev
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=${POSTGRES_VERSION:-17}&charset=${POSTGRES_CHARSET:-utf8}
+      APP_ENV: "${APP_ENV:-dev}"
+      APP_DEBUG: "0"
+      FULL_TEXT_FETCH_ENABLED: "${FULL_TEXT_FETCH_ENABLED:-true}"
+      FULL_TEXT_FETCH_TIMEOUT: "${FULL_TEXT_FETCH_TIMEOUT:-15}"
+      FULL_TEXT_RATE_LIMIT_REQUESTS: "${FULL_TEXT_RATE_LIMIT_REQUESTS:-2}"
+      FULL_TEXT_RATE_LIMIT_INTERVAL: "${FULL_TEXT_RATE_LIMIT_INTERVAL:-5}"
+    command: ["sh", "-c", "php bin/console cache:clear --no-warmup -q && php bin/console cache:warmup -q && php bin/console messenger:consume async_fulltext --time-limit=3600 --memory-limit=128M -vv"]
+    healthcheck:
+      test: ["CMD-SHELL", "ps -ef | grep -F '[m]essenger:consume async_fulltext' >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      - php
+
+###> doctrine/doctrine-bundle ###
+  database:
+    ports:
+      - "5432"
+###< doctrine/doctrine-bundle ###

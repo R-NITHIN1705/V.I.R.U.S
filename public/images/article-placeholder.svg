@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title">
+  <title id="title">Editorial image unavailable</title>
+  <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#13283f"/><stop offset="1" stop-color="#08121f"/></linearGradient></defs>
+  <rect width="800" height="500" fill="url(#bg)"/>
+  <circle cx="400" cy="250" r="104" fill="none" stroke="#55718d" stroke-width="3" opacity=".58"/>
+  <path d="M296 250h208M400 146c-58 57-58 151 0 208m0-208c58 57 58 151 0 208M318 196h164M318 304h164" fill="none" stroke="#55718d" stroke-width="2" opacity=".5"/>
+</svg>

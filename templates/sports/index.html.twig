@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sports | V.I.R.U.S.{% endblock %}
+{% block body_class %}virus-sports-page{% endblock %}
+
+{% block body %}
+<main class="page-shell virus-sports-shell">
+    <a class="explore-back" href="{{ path('app_explore') }}">← Explore</a>
+    <header class="virus-sports-heading">
+        <p class="virus-eyebrow">LIVE SCORES · FIXTURES · SPORTS NEWS</p>
+        <h1>Sports</h1>
+        <p>Scores and fixtures from connected providers, alongside Sports stories from your V.I.R.U.S. feed.</p>
+    </header>
+
+    {% if feed.state == 'not_configured' %}
+        <div class="alert virus-sports-notice" role="status">Sports data is not configured yet. Add an API-Sports football key to enable live scores and fixtures.</div>
+    {% elseif feed.state == 'unavailable' %}
+        <div class="alert virus-sports-notice" role="status">Sports data is temporarily unavailable. Please retry in a moment.</div>
+    {% endif %}
+
+    {% for key, title in {live: 'Live now', upcoming: 'Upcoming', results: 'Recent results'} %}
+        <section class="virus-sports-section" aria-labelledby="sports-{{ key }}">
+            <h2 id="sports-{{ key }}">{{ title }}</h2>
+            {% set events = attribute(feed.events, key) %}
+            {% if events is empty %}
+                {% if feed.state == 'available' %}<p class="virus-sports-empty">No {{ key == 'live' ? 'live events' : key ~ ' events' }} are currently available from the provider.</p>{% endif %}
+            {% else %}
+                <div class="virus-sports-events">
+                    {% for event in events %}
+                        <article class="virus-sports-event">
+                            <small>{{ event.league }}</small>
+                            <div class="virus-sports-teams">
+                                <span>{% if event.homeLogo %}<img class="live-team-logo" src="{{ event.homeLogo }}" alt="{{ event.home }} team logo, supplied by API-Sports" loading="lazy" title="Provider: API-Sports">{% endif %}{{ event.home }}</span>
+                                <strong>{% if key == 'live' or key == 'results' %}{{ event.homeScore ?? '–' }} : {{ event.awayScore ?? '–' }}{% else %}vs{% endif %}</strong>
+                                <span>{% if event.awayLogo %}<img class="live-team-logo" src="{{ event.awayLogo }}" alt="{{ event.away }} team logo, supplied by API-Sports" loading="lazy" title="Provider: API-Sports">{% endif %}{{ event.away }}</span>
+                            </div>
+                            <small>{{ event.status }} · {{ event.date|date('D, M j · H:i', 'UTC') }} UTC{% if event.venue %} · {{ event.venue }}{% endif %}{% if event.homeLogo or event.awayLogo %} · Logos: API-Sports{% endif %}</small>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </section>
+    {% endfor %}
+
+    <section class="virus-sports-section" aria-labelledby="sports-news">
+        <h2 id="sports-news">Sports news</h2>
+        {% if articles is empty %}
+            <p class="virus-sports-empty">No Sports stories have arrived in your feed yet. Add or enable a Sports news source to populate this section.</p>
+        {% else %}
+            <div class="virus-sports-news">
+                {% for article in articles %}
+                    <article class="virus-sports-news-item">
+                        <a href="{{ path('app_story', {id: article.id}) }}" class="article-image-frame virus-sports-news-image">{% include 'components/_provenance_image.html.twig' with {article: article} %}</a>
+                        <div><h3><a href="{{ path('app_story', {id: article.id}) }}">{{ article.title }}</a></h3><p>{{ article.source.name }} · {{ (article.publishedAt ?? article.fetchedAt)|date('M j, H:i') }}</p></div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}

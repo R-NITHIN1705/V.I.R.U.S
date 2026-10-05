@@ -1,0 +1,19 @@
+<article class="card external-story-card news-card {{ variant|default('compact') == 'historical' ? 'news-card--historical' : 'news-card--compact' }}">
+    {% set topic = result.category|default('world')|lower %}
+    {% set illustration = topic in ['politics', 'business', 'science', 'sports'] ? topic : (topic in ['tech', 'technology'] ? 'tech' : 'world') %}
+    {% set illustrationUrl = '/images/editorial/' ~ illustration ~ '.jpg' %}
+    <a class="external-story-image article-image-frame" href="{{ result.url }}" target="_blank" rel="noopener noreferrer" aria-label="Read {{ result.title }} at {{ result.source }}">
+        {% if result.image %}
+            <img src="{{ result.image }}" alt="{{ result.title }}" class="provenance-image" data-provenance-image data-image-type="SOURCE" data-fallback-url="{{ illustrationUrl }}" data-fallback-alt="Editorial illustration representing {{ result.category|default('world news') }}" data-fallback-type="GENERATED_ILLUSTRATION" data-fallback-badge="AI-generated illustration" data-placeholder-url="/images/article-placeholder.svg" data-placeholder-alt="Editorial image unavailable" data-placeholder-type="PLACEHOLDER" data-placeholder-badge="Image unavailable" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+            <span class="image-provenance-badge" data-image-provenance title="Photo: {{ result.source }}">Photo: {{ result.source }}</span>
+        {% else %}
+            <img src="{{ illustrationUrl }}" alt="Editorial illustration representing {{ result.category|default('world news') }}" class="provenance-image" data-provenance-image data-image-type="GENERATED_ILLUSTRATION" data-fallback-url="/images/article-placeholder.svg" data-fallback-alt="Editorial image unavailable" data-fallback-type="PLACEHOLDER" data-fallback-badge="Image unavailable" data-placeholder-url="/images/article-placeholder.svg" data-placeholder-alt="Editorial image unavailable" data-placeholder-type="PLACEHOLDER" data-placeholder-badge="Image unavailable" loading="lazy" decoding="async">
+            <span class="image-provenance-badge" data-image-provenance title="AI-generated illustration">AI-generated illustration</span>
+        {% endif %}
+    </a>
+    <div class="external-story-copy"><span class="provider-label">Global coverage · {{ result.provider }}</span><h3><a href="{{ result.url }}" target="_blank" rel="noopener noreferrer">{{ result.title }}</a></h3>
+        {% if result.snippet %}<p>{{ result.snippet }}</p>{% endif %}
+        <div class="article-topic-tags">{% include 'components/_topic_tag.html.twig' with {label: result.category|default('General'), categorySlug: result.category|default('general')} only %}{% if variant|default('') == 'historical' %}<span class="news-card-historical-label">Historical</span>{% endif %}</div>
+        <div class="external-story-meta"><span>{{ result.source }}</span>{% if result.country %}<span>{{ result.country }}</span>{% endif %}{% if result.language %}<span>{{ result.language }}</span>{% endif %}{% if result.publishedAt %}<time datetime="{{ result.publishedAt|date('c') }}">{{ result.publishedAt|date('M j, Y · H:i') }}</time>{% endif %}<a href="{{ result.url }}" target="_blank" rel="noopener noreferrer">Open original ↗</a></div>
+    </div>
+</article>

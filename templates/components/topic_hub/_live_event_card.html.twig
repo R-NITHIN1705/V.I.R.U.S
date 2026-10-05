@@ -1,0 +1,9 @@
+<article class="virus-sports-event news-card {{ sectionKey == 'live' ? 'news-card--live' : 'news-card--compact' }}">
+    <div class="live-card-header"><span class="live-card-state">{{ sectionKey == 'live' ? 'LIVE' : (sectionKey == 'upcoming' ? 'SCHEDULED' : 'RESULT') }}</span><small>{{ event.league }} · {{ providerName }}</small></div>
+    <div class="virus-sports-teams">
+        <span>{% if event.homeLogo %}<img class="live-team-logo" src="{{ event.homeLogo }}" alt="{{ event.home }} team logo, supplied by {{ providerName }}" loading="lazy" title="Provider: {{ providerName }}">{% endif %}{{ event.home }}</span>
+        <strong>{% if sectionKey == 'live' or sectionKey == 'results' %}{{ event.homeScore ?? '–' }} : {{ event.awayScore ?? '–' }}{% else %}vs{% endif %}</strong>
+        <span>{% if event.awayLogo %}<img class="live-team-logo" src="{{ event.awayLogo }}" alt="{{ event.away }} team logo, supplied by {{ providerName }}" loading="lazy" title="Provider: {{ providerName }}">{% endif %}{{ event.away }}</span>
+    </div>
+    <div class="live-card-footer"><small>{{ event.status }} · {{ event.date|date('D, M j · H:i', 'UTC') }} UTC{% if event.venue %} · {{ event.venue }}{% endif %}</small>{% include 'components/_topic_tag.html.twig' with {label: 'Football', categorySlug: 'football'} only %}</div>
+</article>

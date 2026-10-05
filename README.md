@@ -1,0 +1,399 @@
+# News Aggregator
+
+[![CI](https://github.com/tony-stark-eth/news-aggregator/actions/workflows/ci.yml/badge.svg)](https://github.com/tony-stark-eth/news-aggregator/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PHP 8.4](https://img.shields.io/badge/PHP-8.4-blue.svg)](https://php.net)
+
+Self-hosted, AI-enhanced RSS/Atom news aggregator built with Symfony 8 + FrankenPHP.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+| ![Alerts](docs/screenshots/alerts.png) | ![Mobile](docs/screenshots/dashboard-mobile.png) |
+|---|---|
+| Alert rules with portfolio monitoring | Mobile-responsive layout |
+
+| ![Sentiment positive](docs/screenshots/sentiment-slider-positive.png) | ![Sentiment negative](docs/screenshots/sentiment-slider-negative.png) |
+|---|---|
+| Sentiment slider at +10 (optimistic) | Sentiment slider at -10 (critical) |
+
+| ![Chat](docs/screenshots/chat-working-with-sources.png) | ![Pipeline status](docs/screenshots/pipeline-sentiment-section.png) |
+|---|---|
+| RAG chat assistant with article sources | Pipeline status with sentiment scoring |
+
+## Features
+
+- **RSS/Atom feed aggregation** from configurable sources
+- **AI-powered categorization & summarization** via OpenRouter free models (with rule-based fallback)
+- **Keyword extraction** — AI-extracted entities (people, orgs, places) displayed as tags, searchable
+- **Keyword quality filter** — removes noise tokens, keeps named entities
+- **Multi-language translation** — translates articles to all configured display languages (EN/DE/FR) with client-side language selector; originals preserved
+- **Smart alerts** with keyword and AI-based evaluation
+- **Alert rule fixtures** — define alert strategies in YAML files, load via CLI
+- **Periodic digests** with AI-generated editorial summaries
+- **Full-text search** via SEAL + Loupe (zero infrastructure, SQLite-based) with auto-reindexing
+- **Inline article filter** — client-side search-as-you-type on the dashboard
+- **Sentiment scoring** — AI-extracted sentiment (-1.0 to +1.0) at zero extra cost, with rule-based keyword fallback
+- **Sentiment slider** — navbar range control (-10 to +10) re-ranks articles by mood; extreme values filter opposite sentiment; chat tone adapts
+- **Article scoring & ranking** based on recency, source reliability, and category weights
+- **Score explanation tooltip** — hover to see scoring breakdown
+- **Article bookmarks** — save for later, persist per-user, filter dashboard
+- **Deduplication** across sources (URL, title similarity, content fingerprint)
+- **OPML import and export** — bulk source management with duplicate detection
+- **Full-text article fetch (Readability)** — Phase 1.5 pipeline with per-domain rate limiting and per-source toggle
+- **Real-time updates via Mercure SSE** — new articles banner, in-place enrichment updates
+- **htmx** — declarative partial page updates, no-reload filtering, inline actions
+- **Health check endpoint** (`/health`) — container orchestration, no auth required
+- **Settings UI** — runtime configuration of display languages, fetch interval, retention periods
+- **Dynamic paid model routing** — automatic acceleration when enrichment queue is deep
+- **Data retention** with configurable cleanup intervals
+- **Scheduled maintenance** — daily search reindex + cleanup via Symfony Scheduler
+- Single-user auth, multi-user ready architecture
+
+## Tech Stack
+
+- **Backend**: Symfony 8.0, PHP 8.4, Doctrine ORM
+- **Server**: FrankenPHP + Caddy (automatic HTTPS, HTTP/3)
+- **Database**: PostgreSQL 17 + PgBouncer (connection pooling)
+- **Frontend**: Twig + DaisyUI + plain TypeScript (via Bun + AssetMapper)
+- **AI**: Symfony AI Bundle + OpenRouter (free models, ModelFailoverPlatform)
+- **Search**: SEAL + Loupe (SQLite-based, swap to Meilisearch later)
+- **Async**: Symfony Messenger (Doctrine transport)
+- **Monitoring**: Ember (Caddy/FrankenPHP metrics TUI)
+
+## Requirements
+
+- Docker & Docker Compose v2
+- (Optional) OpenRouter API key for AI features
+
+## Quick Start
+
+### Option A: Pull from GHCR (recommended)
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/tony-stark-eth/news-aggregator:latest
+
+# Download the compose files
+curl -O https://raw.githubusercontent.com/tony-stark-eth/news-aggregator/main/compose.yaml
+curl -O https://raw.githubusercontent.com/tony-stark-eth/news-aggregator/main/compose.prod.yaml
+
+# Copy and edit env
+curl -O https://raw.githubusercontent.com/tony-stark-eth/news-aggregator/main/.env.example
+cp .env.example .env.local
+# Edit .env.local: set ADMIN_EMAIL, ADMIN_PASSWORD_HASH, and optionally OPENROUTER_API_KEY
+
+# Start
+docker compose -f compose.yaml -f compose.prod.yaml up -d
+
+# Access at https://localhost:8443
+```
+
+### Option B: Build from source
+
+```bash
+git clone https://github.com/tony-stark-eth/news-aggregator.git
+cd news-aggregator
+cp .env.example .env.local
+# Edit .env.local
+make start
+
+# Access at https://localhost:8443
+# (Accept the self-signed certificate on first visit)
+```
+
+## Configuration
+
+Copy `.env.example` to `.env.local` and adjust:
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `ADMIN_EMAIL` | Admin login email | `admin@example.com` |
+| `ADMIN_PASSWORD_HASH` | Bcrypt hash of admin password | `$2y$13$...` |
+| `OPENROUTER_API_KEY` | OpenRouter API key (optional) | `sk-or-...` |
+| `OPENROUTER_PAID_FALLBACK_MODEL` | Paid model added to end of failover chain | `google/gemini-2.5-flash-lite` |
+| `OPENROUTER_BLOCKED_MODELS` | Comma-separated blocked model IDs | (empty) |
+| `NOTIFIER_CHATTER_DSN` | Notification transport DSN | see below |
+| `FETCH_DEFAULT_INTERVAL_MINUTES` | How often to fetch feeds | `60` |
+| `DISPLAY_LANGUAGES` | Comma-separated display languages | `en` |
+| `MERCURE_URL` | Internal Mercure hub URL (for publishing) | `https://php/.well-known/mercure` |
+| `MERCURE_PUBLIC_URL` | Public Mercure hub URL (for browser SSE) | `https://localhost:8443/.well-known/mercure` |
+| `MERCURE_JWT_SECRET` | JWT secret for Mercure publishing | `!ChangeThisMercureHubJWTSecretKey!` |
+| `QUEUE_ACCELERATE_THRESHOLD` | Queue depth to start using paid model | `20` |
+| `QUEUE_SKIP_FREE_THRESHOLD` | Queue depth to skip free models entirely | `50` |
+| `FULL_TEXT_FETCH_ENABLED` | Enable full-text article fetching | `true` |
+| `FULL_TEXT_FETCH_TIMEOUT` | HTTP timeout for full-text fetch (seconds) | `15` |
+| `FULL_TEXT_RATE_LIMIT_REQUESTS` | Max requests per domain in rate limit window | `2` |
+| `FULL_TEXT_RATE_LIMIT_INTERVAL` | Rate limit sliding window (seconds) | `5` |
+| `RETENTION_ARTICLES` | Article retention period | `90` |
+| `RETENTION_LOGS` | Notification/digest log retention | `30` |
+
+Generate `ADMIN_PASSWORD_HASH`:
+```bash
+docker compose exec php php bin/console security:hash-password
+```
+
+## Notification Setup
+
+Notifications use Symfony Notifier. Install a transport package, then set the DSN.
+
+### Popular transports
+
+```bash
+# Pushover (recommended for Android)
+composer require symfony/pushover-notifier
+# DSN: pushover://USER_KEY@TOKEN
+
+# Telegram
+composer require symfony/telegram-notifier
+# DSN: telegram://BOT_TOKEN@default?channel=CHAT_ID
+
+# Slack
+composer require symfony/slack-notifier
+# DSN: slack://TOKEN@default?channel=CHANNEL
+
+# Discord
+composer require symfony/discord-notifier
+# DSN: discord://TOKEN@default?webhook_id=ID&webhook_token=TOKEN
+
+# Email (via Mailer)
+composer require symfony/mailer
+# DSN: mailto://from@example.com?to=you@example.com
+```
+
+Set in `.env.local`:
+```dotenv
+NOTIFIER_CHATTER_DSN=pushover://USER_KEY@TOKEN
+```
+
+## Alert Rules
+
+Alert rules watch incoming articles and send notifications when matched. All alert matches are logged to the notification log regardless of whether a notification transport is configured. The log shows delivery status: **sent** (green), **skipped** (gray, no transport), or **failed** (red).
+
+### Loading from fixtures
+
+Define alert strategies in YAML and load them via CLI:
+
+```bash
+make sf c="app:load-alert-rules fixtures/alert-rules/portfolio.yaml"
+make sf c="app:load-alert-rules fixtures/alert-rules/"  # load all files in directory
+make sf c="app:load-alert-rules fixtures/alert-rules/portfolio.yaml --dry-run"  # preview
+make sf c="app:load-alert-rules fixtures/alert-rules/portfolio.yaml --purge"    # remove rules not in file
+```
+
+Fixture format (`fixtures/alert-rules/portfolio.yaml`):
+```yaml
+- name: "Hormuz De-escalation"
+  type: ai
+  keywords: ["hormuz ceasefire", "iran diplomacy", "iran peace deal"]
+  context_prompt: "I hold CF Industries and K+S stocks that profit from the Hormuz blockade..."
+  urgency: high
+  severity_threshold: 6
+  cooldown_minutes: 30
+```
+
+### Creating via UI
+
+Navigate to **Alerts** in the sidebar. Each rule has a **type**:
+
+| Type | Behavior |
+|------|----------|
+| `keyword` | Matches if any keyword appears in title/summary. Fast, no AI calls. |
+| `ai` | Sends all articles to AI for evaluation against a context prompt. |
+| `both` | Keyword match first, then AI confirms on keyword hits only (~10-20 AI calls/day). |
+
+### Creating an alert rule
+
+Navigate to **Alerts** in the sidebar, then:
+
+1. Enter a **name** (e.g. "AI funding news")
+2. Choose **type**: `keyword`, `ai`, or `both`
+3. **Keywords** (for `keyword`/`both`): comma-separated terms, e.g. `OpenAI, Anthropic, funding round`
+4. **Categories**: optionally restrict to specific categories
+5. **Context prompt** (for `ai`/`both`): describe what to match, e.g.:
+   > "Alert me when there is news about AI startup funding rounds over $10M. Ignore incremental product updates."
+6. **Urgency**: `normal` or `high` (high = immediate notification)
+
+## Digest Configuration
+
+Digests are periodic AI-generated editorial summaries. Navigate to **Digests** to manage configurations.
+
+![Digests page](docs/screenshots/digests.png)
+
+| Setting | Description |
+|---------|-------------|
+| **Cron expression** | When to generate, e.g. `0 8 * * *` (daily 8am) |
+| **Categories** | Which categories to include (leave empty for all) |
+| **Max articles** | How many articles to summarize (default: 10) |
+| **Enabled** | Toggle digest on/off without deleting it |
+
+Full CRUD: create, edit, and delete digest configurations from the UI. Use the **Run Now** button to trigger a digest on demand without waiting for the schedule. View past digest content and included articles from the history section.
+
+The digest processor runs every 5 minutes and checks which schedules are due.
+
+## AI Integration
+
+AI features use [OpenRouter](https://openrouter.ai) free models via `symfony/ai-bundle`.
+
+- **No API key required** — the system falls back to rule-based categorization/summarization.
+- **Primary model**: `openrouter/free` — auto-routes to the best available free model.
+- **Failover chain**: If `openrouter/free` is unavailable, `ModelFailoverPlatform` tries minimax, glm, gpt-oss, qwen, and nemotron in sequence.
+- **Quality gates**: AI responses are validated for structure and confidence (>= 0.7). Low-confidence results fall back to rule-based output.
+- **Keyword-first alerts**: For `both`-type rules, AI is only invoked on keyword matches — typically 10-20 AI calls per day.
+- **Blocked models**: Set `OPENROUTER_BLOCKED_MODELS=model-id-1,model-id-2` to permanently skip unreliable models.
+- **Stats**: Run `make sf c="app:ai-stats"` to see model quality metrics.
+
+### AI enrichment pipeline
+
+Each fetched article goes through this pipeline:
+
+1. **Categorization** — assigns a category (politics, tech, business, science, sports)
+2. **Summarization** — generates a 1-2 sentence summary
+3. **Keyword extraction** — extracts 3-5 key entities (people, organizations, places, topics)
+4. **Sentiment scoring** — extracts sentiment from -1.0 to +1.0 (zero extra cost, same API call)
+5. **Translation** — translates title and summary if the source language differs from English
+
+All four steps use the same decorator pattern: AI tries first, rule-based fallback on failure. Keywords and translations are stored alongside the original content.
+
+### Source language & translation
+
+Sources have a `language` field (e.g. `de`, `en`). When a source's language is not English, the AI translates the title and summary after enrichment. The original text is preserved (`titleOriginal`, `summaryOriginal`) and shown via a tooltip on the article card.
+
+Add a language when creating a source in the UI, or set it in the seed data.
+
+## Search
+
+Articles are indexed via SEAL + Loupe (SQLite-based, zero infrastructure). Search covers title, content, summary, source name, category, and extracted keywords.
+
+- **Navbar search** — full-text search via `/search?q=...`
+- **Inline filter** — type in the filter input above the dashboard article list for instant client-side filtering
+- **Auto-reindex** — new articles are indexed automatically via a Doctrine event listener. A daily full reindex runs as a safety net via the maintenance scheduler.
+- **Manual reindex**: `make sf c="app:search-reindex"`
+
+## Article Bookmarking
+
+Save articles for later reading with a single click. Bookmarks are persisted per-user and survive article cleanup. The dashboard includes a bookmark filter to show only saved articles.
+
+![Dashboard with bookmarks](docs/screenshots/dashboard-bookmarks.png)
+
+## OPML Import & Export
+
+Manage sources in bulk via standard OPML files. Import feeds from other readers (Miniflux, FreshRSS, Feedly exports) — duplicate URLs are detected and skipped. Export your current sources as OPML to back up or migrate to another reader.
+
+![OPML import](docs/screenshots/opml-import.png)
+
+Navigate to **Sources** and use the Import/Export buttons.
+
+## Real-time Updates
+
+New articles and enrichment completions are pushed to the browser in real time via Mercure SSE (Server-Sent Events), built into FrankenPHP/Caddy with zero additional infrastructure.
+
+- **New articles banner** — appears when new articles arrive while you are reading
+- **In-place enrichment** — article cards update live when AI enrichment completes (category, summary, keywords appear without page reload)
+
+The browser connects via the native `EventSource` API. No WebSocket server or polling required.
+
+## Full-text Article Fetch
+
+Articles are fetched in full text during Phase 1.5 of the enrichment pipeline using Mozilla Readability. This runs between feed parsing and AI enrichment, so the AI receives the complete article text rather than a truncated RSS snippet.
+
+- **Per-source toggle** — enable or disable full-text fetch on each source
+- **Per-domain rate limiting** — configurable sliding window to respect publisher limits
+- **Graceful fallback** — if full-text fetch fails, the original feed content is used
+
+## Health Check
+
+A lightweight endpoint at `/health` returns system status without requiring authentication. Useful for Docker health checks and container orchestration.
+
+```bash
+curl -k https://localhost:8443/health
+# {"status":"ok","checks":{"database":"ok","messenger":"ok"}}
+```
+
+## Settings
+
+Runtime configuration is available at **Settings** in the sidebar. Settings use a hybrid approach: environment variables set defaults, and the UI allows overriding them at runtime without restarting containers.
+
+![Settings page](docs/screenshots/settings.png)
+
+Configurable values include display languages, fetch interval, article retention period, and log retention period.
+
+## Sentiment Slider
+
+Every article receives a sentiment score from -1.0 (negative) to +1.0 (positive) during AI enrichment -- extracted in the same API call at zero extra cost. Articles without AI enrichment use a rule-based fallback with ~30 positive/negative keyword lists (title weighted 2x, capped at +/-0.8).
+
+The navbar slider controls how sentiment affects your reading experience:
+
+| Slider Value | Behavior |
+|-------------|----------|
+| 0 (center) | No sentiment influence -- default ranking |
+| +/-1 to +/-5 | Boost articles matching your preferred sentiment |
+| +/-6 to +/-10 | Boost matching sentiment AND filter out opposite articles |
+
+![Sentiment slider positive](docs/screenshots/sentiment-slider-positive.png)
+
+The chat assistant also adapts its tone: hopeful and solution-focused at +4 and above, critical and risk-focused at -4 and below.
+
+Backfill existing articles:
+```bash
+make sf c="app:backfill-sentiment"
+```
+
+Monitor progress on the Pipeline Status page (`/settings/pipelines`).
+
+## Data Retention
+
+Old articles and logs are pruned automatically by the `app:cleanup` command (run daily via the maintenance scheduler).
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RETENTION_ARTICLES` | `90` | Articles older than this are deleted |
+| `RETENTION_LOGS` | `30` | Notification and digest logs older than this are deleted |
+
+Run manually:
+```bash
+make sf c="app:cleanup"
+```
+
+## Architecture
+
+Domain-driven design with bounded contexts. See [docs/architecture.md](docs/architecture.md) for the full diagram.
+
+```
+Article    → core articles, scoring, deduplication
+Source     → feed management, fetching, health tracking
+Enrichment → rule-based + AI categorization/summarization/sentiment
+Notification → unified alert rules + Notifier dispatch
+Digest     → periodic AI-generated editorial summaries
+User       → authentication, per-user read state
+Shared     → AI infra, search, categories, cleanup commands
+```
+
+See [docs/article-lifecycle.md](docs/article-lifecycle.md) for the article pipeline diagram.
+
+## Development
+
+```bash
+make up              # Start containers
+make down            # Stop containers
+make sh              # Shell into PHP container
+make quality         # Run all quality checks (ECS + PHPStan + Rector)
+make test            # Run all tests
+make test-unit       # Run unit tests
+make test-integration # Run integration tests
+make infection       # Run mutation testing
+make coverage        # Generate coverage report
+make hooks           # Install git hooks
+make ts-build        # Compile TypeScript
+```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for the vulnerability disclosure policy.
+
+## License
+
+[MIT](LICENSE)

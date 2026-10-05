@@ -1,0 +1,3 @@
+{% set hubRoute = topic_hub_route(categorySlug|default(null)) %}
+{% if hubRoute is null %}{% set hubRoute = {slug: 'general'} %}{% endif %}
+<a class="article-topic-tag {{ size|default('') }}" style="--topic-tag-accent: {{ accentColor|default('#2878c8') }}" href="{{ path('app_topic_hub', hubRoute) }}" aria-label="Explore {{ label }} topic">{{ label }}</a>

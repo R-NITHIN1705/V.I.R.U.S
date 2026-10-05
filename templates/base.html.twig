@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="night">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}News Aggregator{% endblock %}</title>
+    <meta name="mercure-url" content="{{ mercure()|default('') }}">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% block stylesheets %}{% endblock %}
+    <script>
+        try {
+            const isLight = localStorage.getItem('virus-mode') === 'light';
+            document.documentElement.dataset.mode = isLight ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', isLight ? 'winter' : 'night');
+        } catch (error) {
+            document.documentElement.dataset.mode = 'dark';
+            document.documentElement.setAttribute('data-theme', 'night');
+        }
+    </script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => document.querySelectorAll('[data-history-back]').forEach((button) => button.addEventListener('click', () => {
+        if (window.history.length > 1 && document.referrer && new URL(document.referrer).origin === window.location.origin) window.history.back();
+        else window.location.assign('{{ path('app_dashboard') }}');
+      })));
+    </script>
+    <style>
+        .sidebar-expanded { width: 16rem; }
+        .sidebar-collapsed { width: 4rem; }
+        .sidebar-collapsed .sidebar-label { display: none; }
+        .sidebar-collapsed .sidebar-title { display: none; }
+        .sidebar-collapsed .menu { padding-left: 0; padding-right: 0; }
+        .sidebar-collapsed .menu li a { justify-content: center; padding-left: 0.5rem; padding-right: 0.5rem; }
+        .sidebar-collapsed [data-sidebar-toggle-icon] { transform: rotate(180deg); }
+        /* Only enable transition after initial paint to prevent flash */
+        .sidebar-ready [data-sidebar] { transition: width 200ms ease-in-out; }
+        /* Tooltips only visible in collapsed state */
+        .sidebar-expanded .tooltip::before,
+        .sidebar-expanded .tooltip::after { display: none !important; }
+    </style>
+    <script>
+        try {
+            if (localStorage.getItem('sidebar-collapsed') === 'true') {
+                document.documentElement.classList.add('sidebar-start-collapsed');
+            }
+        } catch (e) {}
+    </script>
+</head>
+<body class="min-h-screen bg-base-200 {% block body_class %}{% endblock %}">
+    {% include 'components/_flash_messages.html.twig' %}
+
+    {% block top_navigation %}
+    <header class="navbar virus-navbar sticky top-0 z-50">
+      <div class="navbar-start gap-2">
+        <div class="dropdown lg:hidden"><button tabindex="0" class="btn btn-ghost btn-square" aria-label="Open navigation">☰</button>
+          <ul tabindex="0" class="dropdown-content menu mt-3 p-3 shadow rounded-box w-56 z-50 bg-base-100">
+            <li><a href="{{ path('app_dashboard') }}">Home</a></li><li><a href="{{ path('app_explore') }}">Explore</a></li><li><a href="{{ path('app_topic_hub', {slug: 'sports', '_fragment': 'topic-section-live'}) }}">Live</a></li><li><a href="{{ path('app_sources') }}">Sources</a></li><li><a href="{{ path('app_alerts') }}">Alerts</a></li><li><a href="{{ path('app_digests') }}">Digests</a></li><li><a href="{{ path('app_notifications') }}">Notifications</a></li><li><a href="{{ path('app_saved') }}">Saved</a></li><li><a href="{{ path('app_chat') }}">Assistant</a></li><li><a href="{{ path('app_profile') }}">Profile</a></li><li><a href="{{ path('app_settings') }}">Settings</a></li>
+          </ul>
+        </div>
+        <a href="{{ path('app_dashboard') }}" class="virus-wordmark"><span class="virus-mark">◎</span><span>V.I.R.U.S.<small>Verified Intelligence &amp; Real-time Unified Stories</small></span></a>
+      </div>
+      <nav class="virus-top-links hidden xl:flex" aria-label="Main navigation"><a href="{{ path('app_dashboard') }}">Home</a><a href="{{ path('app_explore') }}">Explore</a><a href="{{ path('app_sources') }}">Sources</a><a href="{{ path('app_alerts') }}">Alerts</a><a href="{{ path('app_digests') }}">Digests</a><a href="{{ path('app_chat') }}">Assistant</a><a href="{{ path('app_profile') }}">Profile</a></nav>
+      <div class="navbar-end gap-2">
+        <form action="{{ path('app_search') }}" method="GET" class="hidden md:block"><label class="input input-bordered input-sm flex items-center gap-2"><span aria-hidden="true">⌕</span><input type="search" name="q" placeholder="Search news" value="{{ nav.searchQuery }}" aria-label="Search news"></label></form>
+        <a href="{{ path('app_notifications') }}" class="btn btn-ghost btn-sm" aria-label="Notifications">♧</a><a href="{{ path('app_saved') }}" class="btn btn-ghost btn-sm" aria-label="Saved articles">▣</a>
+        <button type="button" data-mode-toggle role="switch" aria-checked="false" aria-label="Switch to light mode" class="mode-toggle"><span data-mode-icon>☾</span><span data-mode-label>Dark</span></button>
+        <div class="dropdown dropdown-end"><button tabindex="0" class="btn btn-ghost btn-circle avatar placeholder" aria-label="Account menu"><div class="bg-neutral text-neutral-content rounded-full w-9"><span>{{ app.user ? app.user.userIdentifier|first|upper : '?' }}</span></div></button><ul tabindex="0" class="menu dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-44 z-50">{% if app.user %}<li><a href="{{ path('app_settings') }}">Settings</a></li><li><form action="{{ path('app_logout') }}" method="post"><input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}"><button type="submit">Sign out</button></form></li>{% else %}<li><a href="{{ path('app_login') }}">Sign in</a></li>{% endif %}</ul></div>
+      </div>
+    </header>
+    {% endblock %}
+
+    <div class="flex">
+        {% block sidebar %}
+        <aside class="hidden lg:block p-2 bg-base-100 min-h-[calc(100vh-4rem)] overflow-hidden" data-sidebar>
+            <div class="flex justify-end mb-2">
+                <button class="btn btn-ghost btn-sm btn-square" data-sidebar-toggle title="Toggle sidebar" aria-label="Toggle sidebar width">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform duration-200" data-sidebar-toggle-icon fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+            </div>
+            <ul class="menu">
+                <li class="menu-title sidebar-title">Navigation</li>
+                <li>
+                    <a href="{{ path('app_dashboard') }}" class="{{ nav.activeRoute == 'app_dashboard' ? 'active' : '' }} tooltip tooltip-right" data-tip="Dashboard">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" /></svg>
+                        <span class="sidebar-label">Dashboard</span>
+                    </a>
+                </li>
+                <li><a href="{{ path('app_explore') }}" class="{{ nav.activeRoute == 'app_explore' ? 'active' : '' }}"><span class="sidebar-label">Explore</span></a></li>
+                <li><a href="{{ path('app_saved') }}" class="{{ nav.activeRoute == 'app_saved' ? 'active' : '' }}"><span class="sidebar-label">Saved</span></a></li>
+                <li>
+                    <a href="{{ path('app_sources') }}" class="{{ nav.activeRoute == 'app_sources' ? 'active' : '' }} tooltip tooltip-right" data-tip="Sources">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 5c7.18 0 13 5.82 13 13M6 11a7 7 0 017 7m-6 0a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                        <span class="sidebar-label">Sources</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ path('app_alerts') }}" class="{{ nav.activeRoute == 'app_alerts' ? 'active' : '' }} tooltip tooltip-right" data-tip="Alert Rules">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                        <span class="sidebar-label">Alert Rules</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ path('app_digests') }}" class="{{ nav.activeRoute == 'app_digests' ? 'active' : '' }} tooltip tooltip-right" data-tip="Digests">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <span class="sidebar-label">Digests</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ path('app_notifications') }}" class="{{ nav.activeRoute == 'app_notifications' ? 'active' : '' }} tooltip tooltip-right" data-tip="Notification Log">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+                        <span class="sidebar-label">Notifications</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ path('app_chat') }}" class="{{ nav.activeRoute == 'app_chat' ? 'active' : '' }} tooltip tooltip-right" data-tip="Chat">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                        <span class="sidebar-label">Assistant</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ path('app_settings') }}" class="{{ nav.activeRoute == 'app_settings' ? 'active' : '' }} tooltip tooltip-right" data-tip="Settings">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        <span class="sidebar-label">Settings</span>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+        {% endblock %}
+
+        <main class="flex-1 min-w-0 overflow-x-hidden {% block main_class %}p-4 lg:p-6{% endblock %}">
+            {% block body %}{% endblock %}
+        </main>
+    </div>
+
+    {% set currentRoute = app.request.attributes.get('_route') %}
+    {% set currentHubSlug = app.request.attributes.get('slug') %}
+    <nav class="virus-bottom-nav" aria-label="Primary mobile navigation">
+        <a href="{{ path('app_dashboard') }}" {% if currentRoute == 'app_dashboard' %}class="is-active" aria-current="page"{% endif %}>
+            <span aria-hidden="true">⌂</span>Home
+        </a>
+        <a href="{{ path('app_explore') }}" {% if currentRoute == 'app_explore' or (currentRoute == 'app_topic_hub' and currentHubSlug != 'sports') %}class="is-active" aria-current="page"{% endif %}>
+            <span aria-hidden="true">◎</span>Explore
+        </a>
+        <a href="{{ path('app_topic_hub', {slug: 'sports', '_fragment': 'topic-section-live'}) }}" {% if currentRoute == 'app_topic_hub' and currentHubSlug == 'sports' %}class="is-active" aria-current="page"{% endif %}>
+            <span aria-hidden="true">◉</span>Live
+        </a>
+        <a href="{{ path('app_saved') }}" {% if currentRoute == 'app_saved' %}class="is-active" aria-current="page"{% endif %}>
+            <span aria-hidden="true">▣</span>Saved
+        </a>
+        <a href="{{ path('app_profile') }}" {% if currentRoute == 'app_profile' %}class="is-active" aria-current="page"{% endif %}>
+            <span aria-hidden="true">◯</span>Profile
+        </a>
+    </nav>
+
+    <script>
+        // Apply the initial collapsed state (avoids a flash of expanded sidebar),
+        // then wire up the toggle button and persist the choice.
+        (function () {
+            const sidebar = document.querySelector('[data-sidebar]');
+            if (!sidebar) return;
+
+            let collapsed = false;
+            try {
+                collapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+            } catch (e) {}
+
+            sidebar.classList.add(collapsed ? 'sidebar-collapsed' : 'sidebar-expanded');
+            // Enable the width transition only after the initial state is applied,
+            // so the first paint doesn't animate.
+            requestAnimationFrame(() => document.documentElement.classList.add('sidebar-ready'));
+
+            const toggleBtn = document.querySelector('[data-sidebar-toggle]');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    const nowCollapsed = sidebar.classList.toggle('sidebar-collapsed');
+                    sidebar.classList.toggle('sidebar-expanded', !nowCollapsed);
+                    try {
+                        localStorage.setItem('sidebar-collapsed', String(nowCollapsed));
+                    } catch (e) {}
+                });
+            }
+        })();
+    </script>
+
+    {% block javascripts %}
+        {{ importmap('app') }}
+    {% endblock %}
+</body>
+</html>

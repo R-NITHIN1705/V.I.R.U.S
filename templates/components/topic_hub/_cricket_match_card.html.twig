@@ -1,0 +1,15 @@
+<article class="virus-sports-event news-card {{ sectionKey == 'live' ? 'news-card--live' : 'news-card--compact' }}">
+    <div class="live-card-header">
+        <span class="live-card-state">{{ sectionKey == 'live' ? 'LIVE' : (sectionKey == 'upcoming' ? 'SCHEDULED' : 'RESULT') }}</span>
+        <small>{{ event.matchType ?: 'Cricket' }} · {{ providerName }}</small>
+    </div>
+    <h3 class="cricket-match-name">{{ event.name }}</h3>
+    {% if event.teams is not empty %}<p class="cricket-match-teams">{{ event.teams|join(' · ') }}</p>{% endif %}
+    {% if event.scoreLines is not empty %}<p class="cricket-match-scores">{{ event.scoreLines|join(' · ') }}</p>{% endif %}
+    <div class="live-card-footer">
+        {% if event.status %}<small>{{ event.status }}</small>{% endif %}
+        {% if event.date %}<small>{{ event.date|date('D, M j · H:i', 'UTC') }} UTC</small>{% endif %}
+        {% if event.venue %}<small>{{ event.venue }}</small>{% endif %}
+        {% include 'components/_topic_tag.html.twig' with {label: 'Cricket', categorySlug: 'cricket'} only %}
+    </div>
+</article>

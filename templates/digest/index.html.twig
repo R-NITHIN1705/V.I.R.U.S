@@ -1,0 +1,113 @@
+{% extends 'base.html.twig' %}
+{% block title %}Digests{% endblock %}
+{% block body %}
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Digest Configuration</h1>
+        <a href="{{ path('app_digests_new') }}" class="btn btn-primary btn-sm">New Digest Config</a>
+    </div>
+
+    {% if configs is empty %}
+        {% include 'components/_empty_state.html.twig' with {
+            message: 'No digest configurations yet.',
+            action_label: 'Create Digest Config',
+            action_url: path('app_digests_new')
+        } %}
+    {% else %}
+        <div class="overflow-x-auto mb-8">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Schedule</th>
+                        <th>Categories</th>
+                        <th>Limit</th>
+                        <th>Last Run</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for config in configs %}
+                        <tr>
+                            <td class="font-bold">{{ config.name }}{% if not config.enabled %} <span class="badge badge-ghost badge-xs">off</span>{% endif %}</td>
+                            <td><code>{{ config.schedule }}</code></td>
+                            <td>{{ config.categories|join(', ') ?: 'All' }}</td>
+                            <td>{{ config.articleLimit }}</td>
+                            <td>
+                                {% if config.lastRunAt %}
+                                    <time datetime="{{ config.lastRunAt|date('c') }}" class="timeago">{{ config.lastRunAt|date('Y-m-d H:i') }}</time>
+                                {% else %}
+                                    <span class="text-base-content/30">never</span>
+                                {% endif %}
+                            </td>
+                            <td class="flex gap-1">
+                                <a href="{{ path('app_digests_edit', {id: config.id}) }}" class="btn btn-ghost btn-xs">Edit</a>
+                                <button hx-post="{{ path('app_digests_trigger', {id: config.id}) }}"
+                                        hx-headers='{"X-CSRF-Token": "{{ csrf_token('trigger_digest') }}"}'
+                                        hx-target="this"
+                                        hx-swap="outerHTML"
+                                        class="btn btn-ghost btn-xs text-info">Run Now</button>
+                                <button hx-post="{{ path('app_digests_delete', {id: config.id}) }}"
+                                        hx-headers='{"X-CSRF-Token": "{{ csrf_token('delete_digest_config') }}"}'
+                                        hx-confirm="Delete this digest configuration?"
+                                        hx-target="closest tr"
+                                        hx-swap="outerHTML swap:300ms"
+                                        class="btn btn-ghost btn-xs text-error">Delete</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    <h2 class="text-xl font-bold mb-4">Recent Digest History</h2>
+
+    {# Status filter #}
+    <div class="mb-4">
+        <select class="select select-bordered select-sm w-full max-w-xs"
+                hx-on:change="window.location.href = this.value"
+                aria-label="Filter by status">
+            <option value="{{ path('app_digests') }}"
+                    {{ statusFilter|default(null) is null ? 'selected' : '' }}>All</option>
+            <option value="{{ path('app_digests', {status: 'success'}) }}"
+                    {{ statusFilter|default(null) == 'success' ? 'selected' : '' }}>Success</option>
+            <option value="{{ path('app_digests', {status: 'failed'}) }}"
+                    {{ statusFilter|default(null) == 'failed' ? 'selected' : '' }}>Failed / Skipped</option>
+        </select>
+    </div>
+
+    {% if recentLogs is empty %}
+        <p class="text-base-content/50">No digests generated yet.</p>
+    {% else %}
+        <div class="flex flex-col gap-3">
+            {% for log in recentLogs %}
+                <div class="collapse collapse-arrow bg-base-100 shadow-sm">
+                    <input type="checkbox" />
+                    <div class="collapse-title flex items-center gap-3">
+                        <span class="font-bold">{{ log.digestConfig.name }}</span>
+                        <time datetime="{{ log.generatedAt|date('c') }}" class="text-sm text-base-content/50 timeago">{{ log.generatedAt|date('Y-m-d H:i') }}</time>
+                        <span class="badge badge-sm">{{ log.articleCount }} articles</span>
+                        {% if log.deliverySuccess %}
+                            <span class="badge badge-success badge-sm">delivered</span>
+                        {% else %}
+                            <span class="badge badge-error badge-sm">failed</span>
+                        {% endif %}
+                        <div class="ml-auto flex items-center gap-1 relative z-10">
+                            {% if not log.deliverySuccess %}
+                                <button hx-post="{{ path('app_digests_trigger', {id: log.digestConfig.id}) }}"
+                                        hx-headers='{"X-CSRF-Token": "{{ csrf_token('trigger_digest') }}"}'
+                                        hx-target="this"
+                                        hx-swap="outerHTML"
+                                        class="btn btn-ghost btn-xs text-warning">Retry</button>
+                            {% endif %}
+                            <a href="{{ path('app_digests_log_view', {id: log.id}) }}" class="btn btn-ghost btn-xs">View</a>
+                        </div>
+                    </div>
+                    <div class="collapse-content">
+                        <div class="prose prose-sm max-w-none">{{ log.content|markdown_to_html }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

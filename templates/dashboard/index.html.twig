@@ -1,0 +1,181 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Home · V.I.R.U.S. News{% endblock %}
+{% block body_class %}virus-home{% endblock %}
+{% block main_class %}virus-main{% endblock %}
+{% block top_navigation %}{% endblock %}
+{% block sidebar %}{% endblock %}
+
+{% block body %}
+<div class="virus-app">
+    <header class="virus-header">
+        <a class="virus-brand" href="{{ path('app_dashboard') }}" aria-label="V.I.R.U.S. Home">
+            <svg class="virus-brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+                <circle cx="24" cy="24" r="20"/><ellipse cx="24" cy="24" rx="9" ry="20"/><ellipse cx="24" cy="24" rx="20" ry="9"/><path d="M5 17h38M5 31h38"/>
+            </svg>
+            <span><strong>V.I.R.U.S.</strong><small>Verified Intelligence &amp; Real-time Unified Stories</small></span>
+        </a>
+
+        <nav class="virus-desktop-nav" aria-label="Main navigation">
+            <a class="is-active" href="{{ path('app_dashboard') }}">Home</a>
+            <a href="{{ path('app_explore') }}">Explore</a>
+            <a href="{{ path('app_sources') }}">Sources</a>
+            <a href="{{ path('app_alerts') }}">Alerts</a>
+            <a href="{{ path('app_digests') }}">Digests</a>
+            <a href="{{ path('app_notifications') }}">Notifications</a>
+            <a href="{{ path('app_chat') }}">Assistant</a>
+            <a href="{{ path('app_profile') }}">Profile</a>
+            <a href="{{ path('app_settings') }}">Settings</a>
+        </nav>
+
+        <div class="virus-header-tools">
+            <form action="{{ path('app_search') }}" method="get" class="virus-search" role="search">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
+                    <input name="q" type="search" placeholder="Search stories" aria-label="Search all articles" data-global-search>
+                <kbd>⌘ K</kbd>
+            </form>
+            <a class="virus-icon-link" href="{{ path('app_notifications') }}" aria-label="Notifications" title="Notifications">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+            </a>
+            <a class="virus-icon-link" href="{{ path('app_saved') }}" aria-label="Saved stories" title="Saved stories">▣</a>
+            <button type="button" data-mode-toggle role="switch" aria-checked="false" aria-label="Switch to light mode" class="mode-toggle"><span data-mode-icon>☾</span><span data-mode-label>Dark</span></button>
+            <div class="dropdown dropdown-end">
+                <button class="virus-avatar" type="button" aria-label="Open account menu" aria-haspopup="true">{{ app.user ? app.user.userIdentifier|first|upper : 'U' }}</button>
+                <ul tabindex="0" class="dropdown-content menu virus-account-menu">
+                    <li><a href="{{ path('app_settings') }}">Account settings</a></li>
+                    <li><form action="{{ path('app_logout') }}" method="post"><input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}"><button type="submit">Sign out</button></form></li>
+                </ul>
+            </div>
+            <details class="virus-mobile-menu">
+                <summary aria-label="More sections"><span></span><span></span><span></span></summary>
+                <nav aria-label="More sections">
+                    <a href="{{ path('app_explore') }}">Explore</a><a href="{{ path('app_sources') }}">Sources</a><a href="{{ path('app_saved') }}">Saved</a><a href="{{ path('app_alerts') }}">Alerts</a>
+                    <a href="{{ path('app_digests') }}">Digests</a><a href="{{ path('app_notifications') }}">Notifications</a>
+                    <a href="{{ path('app_chat') }}">News Assistant</a><a href="{{ path('app_profile') }}">Profile</a>
+                    <a href="{{ path('app_settings') }}">Settings</a>
+                </nav>
+            </details>
+        </div>
+    </header>
+
+    <main class="virus-content">
+        <section class="virus-orbit virus-orbit-centered" aria-labelledby="feed-overview-title">
+            <div class="virus-orbit-copy">
+                <span class="virus-live"><i></i> V.I.R.U.S. WORLD FEED</span>
+                <h1 id="feed-overview-title">EXPLORE THE WORLD</h1>
+                <p>A global view of the stories moving today.</p>
+            </div>
+            <div class="virus-globe-wrap" aria-label="Earth illustration. Story location data is not available yet." role="img">
+                <svg class="virus-globe" viewBox="0 0 600 440" role="presentation">
+                    <defs>
+                        <radialGradient id="planetGlow"><stop offset="0" stop-color="#0b3154" stop-opacity=".34"/><stop offset=".76" stop-color="#07182b" stop-opacity=".2"/><stop offset="1" stop-color="#020812" stop-opacity="0"/></radialGradient>
+                        <linearGradient id="planetEdge" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#73baff" stop-opacity=".9"/><stop offset="1" stop-color="#3470bf" stop-opacity=".14"/></linearGradient>
+                        <clipPath id="planetClip"><circle cx="300" cy="220" r="168"/></clipPath>
+                    </defs>
+                    <ellipse cx="300" cy="220" rx="276" ry="196" fill="url(#planetGlow)"/>
+                    <circle cx="300" cy="220" r="168" fill="#061426" stroke="url(#planetEdge)" stroke-width="1.5"/>
+                    <g clip-path="url(#planetClip)" class="globe-grid" fill="none">
+                        <ellipse cx="300" cy="220" rx="66" ry="168"/><ellipse cx="300" cy="220" rx="126" ry="168"/>
+                        <ellipse cx="300" cy="220" rx="168" ry="53"/><ellipse cx="300" cy="220" rx="168" ry="111"/>
+                        <path d="M125 220h350M145 162h310M145 278h310"/>
+                        <path d="M183 93c63 36 171 40 234 0M183 347c63-36 171-40 234 0"/>
+                    </g>
+                    <g clip-path="url(#planetClip)" class="globe-continents" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M167 141l18-17 22 2 13-13 19 7 8 16-12 13-3 14-16 4-7 18-18 7-8 20-18-5-8-15-15-8-5-17 12-13 3-13zM212 220l19 7 10 16-3 15 12 17-7 25-12 20-5 24-14 13-9-16-2-21-13-20 1-21-10-17 8-22z"/>
+                        <path d="M282 119l14-12 26 2 15 10 20-1 19 10 19-4 20 13-6 17-14 5-13 21-12 4-10 19-14 1-7 15-15-3-4-17-14-5-4-20-15-12-14-1-10-17zM315 224l18 4 12 16-6 22-12 16-7 28-13 14-14-10-2-19-8-17 3-25 11-17z"/>
+                        <path d="M432 243l11 9 7 19-8 18-13-5-3-20zM258 95l17-10 21 4-8 11-17 4z"/>
+                    </g>
+                    <circle cx="300" cy="220" r="168" fill="none" stroke="#76b9ff" stroke-opacity=".64"/>
+
+                </svg>
+                <div class="virus-orbit-caption">Global coverage · story locations are not available</div>
+            </div>
+            <div class="virus-orbit-summary"><a class="virus-primary-button" href="{{ path('app_explore') }}">Explore <span aria-hidden="true">→</span></a></div>
+        </section>
+
+        <section class="virus-stats-strip" aria-label="News feed status">
+            <div><span>Stories today</span><strong>{{ articlesToday|number_format }}</strong></div>
+            <div><span>Active sources</span><strong>{{ activeSources|number_format }}</strong></div>
+            <div><span>Last update</span><strong>{% if lastFetchedAt %}<time class="timeago" datetime="{{ lastFetchedAt|date('c') }}">{{ lastFetchedAt|date('M j, H:i') }}</time>{% else %}Not yet{% endif %}</strong></div>
+        </section>
+
+        {% if heroArticle %}
+            <section class="virus-lead-section" aria-labelledby="lead-title">
+                <div class="virus-section-kicker"><span class="virus-section-dot"></span><span>IMPORTANT STORY</span><a href="#latest-news">Jump to latest <span aria-hidden="true">↓</span></a></div>
+                {% include 'components/_news_card.html.twig' with {variant: 'primary', article: heroArticle, readArticleIds: readArticleIds, bookmarkedArticleIds: bookmarkedArticleIds} only %}
+            </section>
+        {% else %}
+            <section class="virus-empty-feed">
+                <span class="virus-live"><i></i> READY WHEN YOU ARE</span>
+                <h2>Your news feed is waiting.</h2>
+                <p>Add a few sources and the latest stories will appear here.</p>
+                <a class="virus-primary-button" href="{{ path('app_sources') }}">Explore sources <span aria-hidden="true">→</span></a>
+            </section>
+        {% endif %}
+
+        {% if trendingArticles is not empty %}
+            {% set trendingHubRoute = topic_hub_route(currentCategory|default(null)) %}
+            {% set trendingHubTitle = topic_hub_title(currentCategory|default(null)) %}
+            <section class="virus-section" aria-labelledby="trending-title">
+                <div class="virus-section-heading">
+                    <div class="virus-heading-title"><span class="virus-heading-icon trending-icon" aria-hidden="true">↗</span><div><h2 id="trending-title">{{ trendingHubTitle ? 'Trending ' ~ trendingHubTitle : 'Trending now' }}</h2><p>Followed topics first, then source relevance and recency</p></div></div>
+                    <a class="virus-see-all" href="{{ trendingHubRoute ? path('app_topic_hub', trendingHubRoute) : path('app_explore') }}">{{ trendingHubTitle ? 'Explore ' ~ trendingHubTitle : 'Explore topics' }} <span aria-hidden="true">→</span></a>
+                </div>
+                <div class="virus-trending-grid">
+                    {% for article in trendingArticles %}
+                        {% include 'components/_news_card.html.twig' with {variant: 'trending', article: article, readArticleIds: readArticleIds, bookmarkedArticleIds: bookmarkedArticleIds} only %}
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        <section class="virus-section virus-latest-section" id="latest-news" aria-labelledby="latest-title">
+            <div class="virus-section-heading latest-heading">
+                <div class="virus-heading-title"><span class="virus-heading-icon latest-icon" aria-hidden="true">▤</span><div><h2 id="latest-title">Latest news</h2><p>Fresh from your selected sources</p></div></div>
+                <div class="virus-latest-tools">
+                    {% set source_options = [{id: null, name: 'All sources', url: path('app_dashboard', {category: currentCategory, unreadOnly: unreadOnly ? 1 : 0, bookmarkedOnly: bookmarkedOnly ? 1 : 0})}] %}
+                    {% for source in sources %}
+                        {% set source_options = source_options|merge([{id: source.id, name: source.name, url: path('app_dashboard', {category: currentCategory, unreadOnly: unreadOnly ? 1 : 0, bookmarkedOnly: bookmarkedOnly ? 1 : 0, source: source.id})}]) %}
+                    {% endfor %}
+                    <form class="virus-source-select" data-source-filter data-sources="{{ source_options|default([])|json_encode|e('html_attr') }}" data-current-source="{{ currentSource|default('') }}">
+                        <input data-source-filter-input type="text" placeholder="Filter sources" autocomplete="off" aria-label="Filter by source" value="{% if currentSource is null %}All sources{% else %}{% for source in sources %}{% if currentSource == source.id %}{{ source.name }}{% endif %}{% endfor %}{% endif %}" {% if sources is empty %}disabled{% endif %}>
+                        <span aria-hidden="true">⌄</span>
+                        <div data-source-filter-dropdown class="hidden"><ul data-source-filter-list></ul></div>
+                    </form>
+                </div>
+            </div>
+
+            <nav class="virus-category-nav" aria-label="Filter stories by category">
+                <a class="{{ currentCategory is null ? 'is-selected' : '' }}" href="{{ path('app_dashboard', {source: currentSource, unreadOnly: unreadOnly ? 1 : 0, bookmarkedOnly: bookmarkedOnly ? 1 : 0}) }}">All</a>
+                {% for category in categories %}
+                    <a class="{{ currentCategory == category.slug ? 'is-selected' : '' }}" href="{{ path('app_dashboard', {category: category.slug, source: currentSource, unreadOnly: unreadOnly ? 1 : 0, bookmarkedOnly: bookmarkedOnly ? 1 : 0}) }}">{{ category.name }}</a>
+                {% endfor %}
+                <span class="virus-category-spacer"></span>
+                <a class="virus-filter-chip {{ unreadOnly ? 'is-selected' : '' }}" href="{{ path('app_dashboard', {category: currentCategory, source: currentSource, unreadOnly: unreadOnly ? null : 1, bookmarkedOnly: bookmarkedOnly ? 1 : 0}) }}">Unread</a>
+                <a class="virus-filter-chip {{ bookmarkedOnly ? 'is-selected' : '' }}" href="{{ path('app_dashboard', {category: currentCategory, source: currentSource, unreadOnly: unreadOnly ? 1 : 0, bookmarkedOnly: bookmarkedOnly ? null : 1}) }}">Saved</a>
+                {% if unreadCounts is defined and unreadCounts and unreadCounts.total > 0 %}
+                    <button class="virus-mark-read" hx-post="{{ path('app_articles_read_all') }}" hx-target="#article-feed" hx-swap="innerHTML" hx-headers='{"X-CSRF-Token": "{{ csrf_token('mark_all_read') }}"}'>Mark all read</button>
+                {% endif %}
+            </nav>
+
+            {% if pipelineStats is defined and pipelineStats and (pipelineStats.pending_fulltext > 0 or pipelineStats.pending_enrichment > 0) %}
+                <p class="virus-pipeline-note" role="status">Article updates · {% if pipelineStats.pending_fulltext > 0 %}{{ pipelineStats.pending_fulltext }} full stories loading{% endif %}{% if pipelineStats.pending_enrichment > 0 %}{{ pipelineStats.pending_fulltext > 0 ? ' · ' : '' }}{{ pipelineStats.pending_enrichment }} stories being enriched{% endif %}</p>
+            {% endif %}
+
+            <div id="feed-loader" class="htmx-indicator virus-feed-loader"><span class="loading loading-spinner"></span><span>Loading stories…</span></div>
+            {% if articles is empty %}
+                <div class="virus-list-empty">No stories match these filters. Try another category or source.</div>
+            {% else %}
+                <div id="article-feed" class="virus-article-feed">
+                    {% for article in latestArticles %}
+                        {% include 'components/_news_card.html.twig' with {variant: 'compact', article: article, readArticleIds: readArticleIds, bookmarkedArticleIds: bookmarkedArticleIds} only %}
+                    {% endfor %}
+                    {% include 'components/_pagination_loader.html.twig' with {currentPage: page, currentCategory: currentCategory, currentSource: currentSource, unreadOnly: unreadOnly, bookmarkedOnly: bookmarkedOnly, hasMore: articles|length >= 20} %}
+                </div>
+            {% endif %}
+        </section>
+        <footer class="virus-footer">A clearer view of the stories that matter.</footer>
+    </main>
+
+</div>
+{% endblock %}

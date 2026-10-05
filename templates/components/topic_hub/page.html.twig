@@ -1,0 +1,138 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ hub.title }} · Explore · V.I.R.U.S.{% endblock %}
+{% block body_class %}virus-topic-hub-page{% endblock %}
+
+{% block body %}
+<main class="page-shell topic-hub-shell" style="--topic-accent: {{ hub.accentColor }}">
+    <nav class="topic-hub-breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ path('app_explore') }}">Explore</a><span aria-hidden="true">/</span><span aria-current="page">{{ hub.title }}</span>
+    </nav>
+
+    <header class="topic-hub-hero virus-sports-heading">
+        <div class="topic-hub-hero-copy">
+            <p class="virus-eyebrow">TOPIC HUB</p>
+            <h1>{{ hub.title }}{% if selectedSubtopic %}<span class="topic-hub-selected-title"> · {{ hub.subtopicTitle(selectedSubtopic) }}</span>{% endif %}</h1>
+            <p>{{ hub.description }}</p>
+        </div>
+        {% if hub.heroImage %}
+            <figure class="topic-hub-hero-art">
+                <img src="{{ hub.heroImage }}" alt="{{ hub.heroImageAlt }}" class="provenance-image" data-provenance-image data-image-type="GENERATED_ILLUSTRATION" data-fallback-url="/images/article-placeholder.svg" data-fallback-alt="Editorial image unavailable" data-fallback-type="PLACEHOLDER" data-fallback-badge="Image unavailable" data-placeholder-url="/images/article-placeholder.svg" data-placeholder-alt="Editorial image unavailable" data-placeholder-type="PLACEHOLDER" data-placeholder-badge="Image unavailable" loading="lazy" decoding="async">
+                <figcaption class="image-provenance-badge" data-image-provenance title="{{ hub.heroImageProvenance }}">{{ hub.heroImageProvenance }}</figcaption>
+            </figure>
+        {% endif %}
+    </header>
+
+    <nav class="topic-hub-subtopics" aria-label="{{ hub.title }} subtopics">
+        <a class="topic-hub-chip {{ selectedSubtopic is null ? 'is-active' : '' }}" href="{{ path('app_topic_hub', {slug: hub.slug}) }}" {% if selectedSubtopic is null %}aria-current="page"{% endif %}>All {{ hub.title }}</a>
+        {% for subtopic in hub.subtopics %}
+            <a class="topic-hub-chip {{ selectedSubtopic == subtopic.slug ? 'is-active' : '' }}" href="{{ path('app_topic_hub', {slug: hub.slug}) }}?subtopic={{ subtopic.slug|url_encode }}" {% if selectedSubtopic == subtopic.slug %}aria-current="page"{% endif %}>{{ subtopic.title }}</a>
+        {% endfor %}
+    </nav>
+
+    {% if selectedSubtopic %}
+        <p class="topic-hub-scope-note" role="status">
+            {{ hub.subtopicTitle(selectedSubtopic) }} selected.
+            {% if hub.slug == 'sports' and selectedSubtopic == 'cricket' %}Cricket match data is supplied by CricketData; football match data is supplied separately by API-Sports.{% elseif hub.slug == 'sports' and selectedSubtopic == 'football' %}Football match data is supplied by API-Sports. Other sports use their own connected providers when available.{% elseif hub.slug == 'sports' %}No dedicated live-match provider is configured for {{ hub.subtopicTitle(selectedSubtopic) }} yet; publisher reporting remains available in the Sports feed.{% else %}Dedicated subtopic-specific feeds are not connected yet; this page remains within the {{ hub.title }} hub.{% endif %}
+        </p>
+    {% endif %}
+
+    {% for section in hub.sections %}
+        <section class="topic-hub-section" aria-labelledby="topic-section-{{ section.key }}">
+            <div class="topic-hub-section-heading"><h2 id="topic-section-{{ section.key }}">{{ section.title }}</h2></div>
+
+            {% if section.kind == 'sports_events' %}
+                {% if selectedSubtopic and selectedSubtopic not in ['football', 'cricket'] %}
+                    <p class="virus-sports-empty">{{ section.title }} data for {{ hub.subtopicTitle(selectedSubtopic) }} isn't configured.</p>
+                {% else %}
+                    {% set activeFeed = selectedSubtopic == 'cricket' ? cricketFeed : feed %}
+                    {% set events = attribute(activeFeed.events, section.key) %}
+                    {% if activeFeed.state == 'not_configured' %}
+                        <p class="virus-sports-empty">{% if section.key == 'live' %}Live sports data isn't configured.{% else %}{{ section.title }} data isn't configured.{% endif %}</p>
+                    {% elseif activeFeed.state == 'unavailable' %}
+                        <p class="virus-sports-empty">{{ section.title }} data is temporarily unavailable. Please retry in a moment.</p>
+                    {% elseif events is empty %}
+                        <p class="virus-sports-empty">No {{ section.key == 'live' ? 'live events' : section.title|lower }} are currently available from {{ activeFeed.providerName }}.</p>
+                    {% else %}
+                        <div class="virus-sports-events">
+                            {% for event in events %}
+                                {% if selectedSubtopic == 'cricket' %}
+                                    {% include 'components/topic_hub/_cricket_match_card.html.twig' with {event: event, providerName: activeFeed.providerName, sectionKey: section.key} only %}
+                                {% else %}
+                                    {% include 'components/_news_card.html.twig' with {variant: 'live', event: event, providerName: activeFeed.providerName, sectionKey: section.key} only %}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% elseif section.kind == 'tmdb_trending' %}
+                {% if movieFeed.state == 'not_configured' %}
+                    <p class="virus-sports-empty">TMDB trending movies are not configured.</p>
+                {% elseif movieFeed.state == 'unavailable' %}
+                    <p class="virus-sports-empty">TMDB movie data is temporarily unavailable. Please retry in a moment.</p>
+                {% elseif movieFeed.movies is empty %}
+                    <p class="virus-sports-empty">TMDB currently returned no trending movie listings.</p>
+                {% else %}
+                    <div class="tmdb-trending-grid">
+                        {% for movie in movieFeed.movies %}
+                            <article class="tmdb-trending-card">
+                                {% if movie.posterPath %}
+                                    <figure class="article-image-frame tmdb-poster-frame">
+                                        <img src="https://image.tmdb.org/t/p/w342{{ movie.posterPath|e('html_attr') }}" alt="Poster artwork for {{ movie.title }} (TMDB provider image)" class="provenance-image" data-provenance-image data-image-type="PROVIDER" data-fallback-url="/images/article-placeholder.svg" data-fallback-alt="Editorial image unavailable" data-fallback-type="PLACEHOLDER" data-fallback-badge="Image unavailable" data-placeholder-url="/images/article-placeholder.svg" data-placeholder-alt="Editorial image unavailable" data-placeholder-type="PLACEHOLDER" data-placeholder-badge="Image unavailable" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+                                        <span class="image-provenance-badge" data-image-provenance title="Poster artwork · Provider: TMDB">Poster · TMDB</span>
+                                    </figure>
+                                {% endif %}
+                                <h3>{{ movie.title }}</h3>
+                                {% if movie.releaseDate %}<p>Release date · {{ movie.releaseDate }}</p>{% endif %}
+                                {% if movie.rating is not null %}<p>TMDB rating · {{ movie.rating|number_format(1) }}/10 · {{ movie.voteCount }} votes</p>{% endif %}
+                                {% if movie.overview %}<p>{{ movie.overview }}</p>{% endif %}
+                                <small>Trending data · TMDB</small>
+                            </article>
+                        {% endfor %}
+                    </div>
+                    <p class="tmdb-attribution">Movie metadata and any displayed ratings are provided by TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+                {% endif %}
+            {% elseif section.kind == 'latest' %}
+                {% if articles is empty %}
+                    <p class="virus-sports-empty">{{ hub.articleEmptyMessage }}</p>
+                {% else %}
+                    <div class="virus-sports-news">
+                        {% for article in articles %}
+                            <article class="virus-sports-news-item">
+                                <a href="{{ path('app_story', {id: article.id}) }}" class="article-image-frame virus-sports-news-image">{% include 'components/_provenance_image.html.twig' with {article: article} %}</a>
+                                <div>{% include 'components/_article_topic_tags.html.twig' with {article: article} %}<h3><a href="{{ path('app_story', {id: article.id}) }}">{{ article.title }}</a></h3><p>{{ article.source.name }} · {{ (article.publishedAt ?? article.fetchedAt)|date('M j, H:i') }}</p></div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% elseif section.kind == 'classified_latest' %}
+                <p class="virus-sports-empty">{{ hub.articleEmptyMessage }}</p>
+            {% elseif section.kind == 'trending' %}
+                {% if trendingArticles is empty %}<p class="virus-sports-empty">{{ section.emptyMessage|default('Trending coverage is not available yet; no source-backed popularity ranking is connected.') }}</p>{% endif %}
+            {% elseif section.kind == 'deep_dive' %}
+                {% if deepDiveArticles is empty %}<p class="virus-sports-empty">{{ section.emptyMessage|default('No curated deep dives are available yet.') }}</p>{% endif %}
+            {% elseif section.kind == 'provider_empty' or section.kind == 'market_data' %}
+                <div class="topic-hub-provider-state {{ section.kind == 'market_data' ? 'is-market-data' : '' }}">
+                    {% if section.kind == 'market_data' %}<strong>{{ section.providerLabel|default('External provider') }}</strong>{% endif %}
+                    <p>{{ section.emptyMessage|default('This provider is not configured yet; no data is shown.') }}</p>
+                </div>
+            {% elseif section.kind == 'label_guide' %}
+                <div class="topic-hub-label-guide">
+                    {% for label in section.labels|default([]) %}
+                        <div><strong>{{ label.title }}</strong><p>{{ label.description }}</p></div>
+                    {% endfor %}
+                    <p class="topic-hub-label-note">{{ section.emptyMessage|default('Labels are applied only when supported by source material.') }}</p>
+                </div>
+            {% elseif section.kind == 'related_topics' %}
+                <div class="topic-hub-related">
+                    {% for subtopic in hub.subtopics %}
+                        {% if subtopic.slug != selectedSubtopic %}<a class="topic-hub-chip" href="{{ path('app_topic_hub', {slug: hub.slug}) }}?subtopic={{ subtopic.slug|url_encode }}">{{ subtopic.title }}</a>{% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="virus-sports-empty">{{ section.emptyMessage|default('This section has no connected data source yet.') }}</p>
+            {% endif %}
+        </section>
+    {% endfor %}
+</main>
+{% endblock %}

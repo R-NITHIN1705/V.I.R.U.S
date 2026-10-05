@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+{% block sidebar %}{% endblock %}
+{% block title %}Create account · News Aggregator{% endblock %}
+{% block body %}
+<div class="flex justify-center px-3 py-8"><section class="card w-full max-w-lg bg-base-100 shadow-2xl border border-base-300"><div class="card-body gap-4">
+    <div><p class="text-primary uppercase tracking-widest text-xs font-bold">Your personal news desk</p><h1 class="text-2xl font-bold mt-2">Create your account</h1><p class="text-base-content/70 mt-1">Bring your sources, alerts, and digests together.</p></div>
+    {% if errors %}<div class="alert alert-error" role="alert"><ul>{% for message in errors %}<li>{{ message }}</li>{% endfor %}</ul></div>{% endif %}
+    <form method="post" class="space-y-4" data-auth-form>
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('register') }}">
+        <label class="form-control"><span class="label-text mb-1">Full name</span><input class="input input-bordered" name="name" value="{{ data.name }}" maxlength="120" autocomplete="name" required></label>
+        <label class="form-control"><span class="label-text mb-1">Email</span><input class="input input-bordered" type="email" name="email" value="{{ data.email }}" autocomplete="email" required></label>
+        <label class="form-control"><span class="label-text mb-1">Password</span><div class="join"><input class="input input-bordered join-item w-full" type="password" name="password" minlength="12" autocomplete="new-password" required><button type="button" class="btn btn-outline join-item" data-password-toggle>Show</button></div><span class="text-xs text-base-content/60 mt-1">Use at least 12 characters.</span></label>
+        <label class="form-control"><span class="label-text mb-1">Confirm password</span><input class="input input-bordered" type="password" name="confirm_password" minlength="12" autocomplete="new-password" required></label>
+        <button class="btn btn-primary w-full" type="submit"><span data-submit-label>Create account</span><span class="loading loading-spinner loading-sm hidden" data-submit-spinner></span></button>
+    </form><p class="text-center text-sm">Already have an account? <a class="link link-primary" href="{{ path('app_login') }}">Sign in</a></p>
+</div></section></div>
+{% endblock %}

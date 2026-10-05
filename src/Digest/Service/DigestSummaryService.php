@@ -1,0 +1,108 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Digest\Service;
+
+use App\Article\ValueObject\ArticleCollection;
+use App\Digest\ValueObject\GroupedArticles;
+use App\Shared\Service\SettingsServiceInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\AI\Platform\Message\Message;
+use Symfony\AI\Platform\Message\MessageBag;
+use Symfony\AI\Platform\PlatformInterface;
+
+final readonly class DigestSummaryService implements DigestSummaryServiceInterface
+{
+    private const string MODEL = 'openrouter/free';
+
+    private const string PROMPT_TEMPLATE = <<<'PROMPT'
+Generate a concise editorial digest for the following news articles grouped by category.
+For each category, provide:
+- A 1-2 sentence summary of the key themes
+- Key takeaways (bullet points)
+
+Articles:
+%s
+PROMPT;
+
+    public function __construct(
+        private PlatformInterface $platform,
+        private SettingsServiceInterface $settingsService,
+        private LoggerInterface $logger,
+    ) {
+    }
+
+    public function generate(GroupedArticles $groupedArticles): string
+    {
+        $articleText = $this->formatArticles($groupedArticles->byCategory);
+
+        try {
+            $prompt = sprintf(self::PROMPT_TEMPLATE, $articleText);
+            $prompt .= $this->getSentimentFraming();
+            $input = new MessageBag(Message::ofUser($prompt));
+            $result = $this->platform->invoke(self::MODEL, $input);
+            $content = trim($result->asText());
+
+            if (mb_strlen($content) >= 50) {
+                return $content;
+            }
+        } catch (\Throwable $e) {
+            $this->logger->warning('AI digest generation failed: {error}', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return $this->ruleBasedFallback($groupedArticles->byCategory);
+    }
+
+    /**
+     * @param array<string, ArticleCollection> $groupedArticles
+     */
+    private function formatArticles(array $groupedArticles): string
+    {
+        $parts = [];
+        foreach ($groupedArticles as $category => $articles) {
+            $parts[] = sprintf('## %s', ucfirst($category));
+            foreach ($articles as $article) {
+                $summary = $article->getSummary() ?? mb_substr($article->getTitle(), 0, 100);
+                $parts[] = sprintf('- %s: %s', $article->getTitle(), $summary);
+            }
+        }
+
+        return implode("\n", $parts);
+    }
+
+    private function getSentimentFraming(): string
+    {
+        $slider = $this->settingsService->getSentimentSlider();
+
+        if ($slider > 3) {
+            return "\n\nTone: Emphasize hopeful developments, solutions, and constructive outcomes in your summaries.";
+        }
+
+        if ($slider < -3) {
+            return "\n\nTone: Emphasize risks, challenges, and critical analysis in your summaries.";
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<string, ArticleCollection> $groupedArticles
+     */
+    private function ruleBasedFallback(array $groupedArticles): string
+    {
+        $parts = [];
+        foreach ($groupedArticles as $category => $articles) {
+            $parts[] = sprintf('=== %s ===', strtoupper($category));
+            foreach ($articles as $article) {
+                $excerpt = $article->getSummary() ?? mb_substr($article->getContentText() ?? $article->getTitle(), 0, 150);
+                $parts[] = sprintf("• %s\n  %s\n  %s", $article->getTitle(), $excerpt, $article->getUrl());
+            }
+            $parts[] = '';
+        }
+
+        return implode("\n", $parts);
+    }
+}

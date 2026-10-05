@@ -1,0 +1,23 @@
+{% set is_read = readArticleIds is defined and article.id in readArticleIds|keys %}
+{% set is_bookmarked = bookmarkedArticleIds is defined and article.id in bookmarkedArticleIds|keys %}
+<article class="virus-latest-row news-card news-card--compact {{ is_read ? 'article-read' : 'article-unread' }}" data-article-id="{{ article.id }}" data-searchable="{{ article.title|lower }} {{ article.summary|default('')|lower }}" data-enrichment-status="{{ article.enrichmentStatus ? article.enrichmentStatus.value : 'complete' }}" data-title-default="{{ article.title|e('html_attr') }}" data-summary-default="{{ article.summary|default('')|e('html_attr') }}" {% if article.translations is not null %}data-translations="{{ article.translations|json_encode|e('html_attr') }}"{% endif %}>
+        <a class="latest-row-image article-photo article-image-frame" href="{{ path('app_story',{id:article.id}) }}" aria-label="Open {{ article.title }}">{% include 'components/_provenance_image.html.twig' with {article: article} %}</a>
+    <div class="latest-row-copy">
+        <div class="latest-row-meta">
+            {% include 'components/_article_topic_tags.html.twig' with {article: article} %}
+            <span>{{ article.source.name }}</span><i></i>
+            <time class="timeago" datetime="{{ article.publishedAt ? article.publishedAt|date('c') : article.fetchedAt|date('c') }}">{{ article.publishedAt ? article.publishedAt|date('M j, H:i') : article.fetchedAt|date('M j, H:i') }}</time>
+        </div>
+        <h3><a class="article-link" data-article-id="{{ article.id }}" data-lang-title href="{{ path('app_story', {id: article.id}) }}">{{ article.title }}</a></h3>
+        {% if article.summary %}<p data-lang-summary>{{ article.summary }}</p>{% endif %}
+        {% if article.keywords is not null and article.keywords is not empty %}<div class="latest-keywords" data-lang-keywords>{% for keyword in article.keywords|slice(0, 4) %}<span>{{ keyword }}</span>{% endfor %}</div>{% endif %}
+        <div class="article-content-area" id="article-content-{{ article.id }}"></div>
+        {% if article.contentFullHtml or article.contentFullText %}
+            <button type="button" class="virus-inline-read" data-expanded="false" hx-get="{{ path('app_article_content', {id: article.id}) }}" hx-target="#article-content-{{ article.id }}" hx-swap="innerHTML" hx-on:click="if(this.dataset.expanded === 'true') { document.getElementById('article-content-{{ article.id }}').innerHTML = ''; this.dataset.expanded = 'false'; this.textContent = 'Read in app ↓'; event.preventDefault(); return; } this.dataset.expanded = 'true'; this.textContent = 'Collapse ↑';">Read in app ↓</button>
+        {% endif %}
+    </div>
+    <div class="latest-row-actions">
+        {% include 'components/_bookmark_button.html.twig' with {article: article, isBookmarked: is_bookmarked} %}
+        <a class="latest-open-link" href="{{ article.url }}" target="_blank" rel="noopener" aria-label="Open {{ article.title }} at source">↗</a>
+    </div>
+</article>

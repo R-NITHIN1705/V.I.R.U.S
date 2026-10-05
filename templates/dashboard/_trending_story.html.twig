@@ -1,0 +1,11 @@
+{% set is_read = readArticleIds is defined and article.id in readArticleIds|keys %}
+{% set is_bookmarked = bookmarkedArticleIds is defined and article.id in bookmarkedArticleIds|keys %}
+<article class="virus-trending-card news-card news-card--trending {{ is_read ? 'article-read' : 'article-unread' }}" data-article-id="{{ article.id }}" data-searchable="{{ article.title|lower }} {{ article.summary|default('')|lower }}">
+    <a href="{{ path('app_story',{id:article.id}) }}" class="trending-visual article-photo article-image-frame" aria-label="Open {{ article.title }}">{% include 'components/_provenance_image.html.twig' with {article: article} %}</a>
+    <div class="trending-card-copy">
+        {% include 'components/_article_topic_tags.html.twig' with {article: article} %}
+        <h3><a class="article-link" data-article-id="{{ article.id }}" href="{{ path('app_story', {id: article.id}) }}">{{ article.title }}</a></h3>
+        <div class="virus-story-meta"><span>{{ article.source.name }}</span><i></i><time class="timeago" datetime="{{ article.publishedAt ? article.publishedAt|date('c') : article.fetchedAt|date('c') }}">{{ article.publishedAt ? article.publishedAt|date('M j, H:i') : article.fetchedAt|date('M j, H:i') }}</time></div>
+    </div>
+    {% include 'components/_bookmark_button.html.twig' with {article: article, isBookmarked: is_bookmarked} %}
+</article>

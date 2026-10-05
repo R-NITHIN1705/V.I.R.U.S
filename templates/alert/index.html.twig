@@ -1,0 +1,72 @@
+{% extends 'base.html.twig' %}
+{% block title %}Alert Rules{% endblock %}
+{% block body %}
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Alert Rules</h1>
+        <a href="{{ path('app_alerts_new') }}" class="btn btn-primary btn-sm">New Alert Rule</a>
+    </div>
+
+    {% if rules is empty %}
+        {% include 'components/_empty_state.html.twig' with {
+            message: 'No alert rules configured yet.',
+            action_label: 'Create Alert Rule',
+            action_url: path('app_alerts_new')
+        } %}
+    {% else %}
+        <div class="overflow-x-auto">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Keywords</th>
+                        <th>Urgency</th>
+                        <th>Cooldown</th>
+                        <th>Enabled</th>
+                        <th>Matches</th>
+                        <th>Last Triggered</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rule in rules %}
+                        <tr>
+                            <td class="font-bold">{{ rule.name }}</td>
+                            <td><span class="badge badge-outline badge-sm">{{ rule.type.value }}</span></td>
+                            <td class="text-sm max-w-xs truncate">{{ rule.keywords|join(', ') }}</td>
+                            <td>
+                                {% set urgency_class = { 'high': 'badge-error', 'medium': 'badge-warning', 'low': 'badge-info' } %}
+                                <span class="badge badge-sm {{ urgency_class[rule.urgency.value] ?? 'badge-ghost' }}">{{ rule.urgency.value }}</span>
+                            </td>
+                            <td>{{ rule.cooldownMinutes }}m</td>
+                            <td>
+                                {% include 'alert/_toggle_badge.html.twig' with { rule: rule } %}
+                            </td>
+                            <td>
+                                {% set stats = matchStats[rule.id] ?? null %}
+                                {{ stats ? stats.count : 0 }}
+                            </td>
+                            <td>
+                                {% set stats = matchStats[rule.id] ?? null %}
+                                {% if stats and stats.lastTriggeredAt %}
+                                    <time datetime="{{ stats.lastTriggeredAt|date('c') }}" class="timeago">{{ stats.lastTriggeredAt|date('Y-m-d H:i') }}</time>
+                                {% else %}
+                                    <span class="text-base-content/50">never</span>
+                                {% endif %}
+                            </td>
+                            <td class="flex gap-1">
+                                <a href="{{ path('app_alerts_edit', {id: rule.id}) }}" class="btn btn-ghost btn-xs">Edit</a>
+                                <button hx-post="{{ path('app_alerts_delete', {id: rule.id}) }}"
+                                        hx-headers='{"X-CSRF-Token": "{{ csrf_token('delete_alert_rule') }}"}'
+                                        hx-confirm="Delete this alert rule?"
+                                        hx-target="closest tr"
+                                        hx-swap="outerHTML swap:300ms"
+                                        class="btn btn-ghost btn-xs text-error">Delete</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ article.title }} · V.I.R.U.S.{% endblock %}
+{% block body_class %}virus-story-page{% endblock %}
+{% block body %}
+<main class="story-shell">
+    <button class="explore-back history-back" type="button" title="Go back" aria-label="Go back" data-history-back>← Back</button>
+    <article class="story-detail">
+        <div class="story-kicker">{% include 'components/_article_topic_tags.html.twig' with {article: article} %}<span>ORIGINAL REPORT</span></div>
+        <h1>{{ article.title }}</h1>
+        <div class="story-meta"><span>{{ article.source.name }}</span><span>·</span><time datetime="{{ article.publishedAt ? article.publishedAt|date('c') : article.fetchedAt|date('c') }}">{{ article.publishedAt ? article.publishedAt|date('M j, Y · H:i') : article.fetchedAt|date('M j, Y · H:i') }}</time></div>
+        <figure class="story-hero-image article-image-frame">{% include 'components/_provenance_image.html.twig' with {article: article, fetchpriority: 'high'} %}</figure>
+        {% include 'components/_bookmark_button.html.twig' with {article:article,isBookmarked:isBookmarked|default(false)} %}
+        {% if article.summary %}<section class="story-quick"><h2>Quick understanding</h2><p>{{ article.summary }}</p></section>{% endif %}
+        <section class="story-content"><h2>Source report</h2>{% include 'components/_article_content.html.twig' with {article: article} %}</section>
+        <section class="story-tools" aria-label="Story tools">
+            <div><h2>Verification</h2><p>Verification service is not connected. No verification has been performed for this story.</p><button type="button" disabled>Verify · unavailable</button></div>
+            <div><h2>Timeline &amp; discussion</h2><p>Story clustering and discussion are not connected yet. This page shows the source report only.</p><a href="{{ path('app_chat') }}">Open news assistant <span aria-hidden="true">→</span></a></div>
+        </section>
+        <a class="story-source-link" href="{{ article.url }}" target="_blank" rel="noopener">Read the original at {{ article.source.name }} ↗</a>
+    </article>
+</main>
+{% endblock %}

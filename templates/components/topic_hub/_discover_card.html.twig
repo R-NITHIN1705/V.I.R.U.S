@@ -1,0 +1,18 @@
+<article class="explore-discover-card explore-discover-tile" style="--discover-accent: {{ hub.accentColor }}">
+    <a class="explore-discover-link" href="{{ path('app_topic_hub', {slug: hub.slug}) }}">
+        <span class="explore-discover-card-icon" aria-hidden="true">{% include 'components/topic_hub/_discover_icon.html.twig' with {icon: hub.icon} only %}</span>
+        <span class="explore-discover-card-copy"><strong>{{ hub.title }}</strong><span>{{ hub.description }}</span></span>
+        <span class="explore-discover-card-cta">Explore <span aria-hidden="true">→</span></span>
+    </a>
+    {% if app.user %}
+        <form class="explore-follow-form" action="{{ path('app_topic_follow', {slug: hub.slug}) }}" method="post">
+            <input type="hidden" name="_token" value="{{ csrf_token('topic-follow-' ~ hub.slug) }}">
+            <input type="hidden" name="action" value="{{ isFollowed ? 'unfollow' : 'follow' }}">
+            <button class="explore-follow-button {{ isFollowed ? 'is-following' : '' }}" type="submit" aria-pressed="{{ isFollowed ? 'true' : 'false' }}" aria-label="{{ isFollowed ? 'Unfollow' : 'Follow' }} {{ hub.title }}">
+                <span aria-hidden="true">{{ isFollowed ? '✓' : '+' }}</span>{{ isFollowed ? 'Following' : 'Follow' }}
+            </button>
+        </form>
+    {% else %}
+        <a class="explore-follow-button" href="{{ path('app_login') }}" aria-label="Sign in to follow {{ hub.title }}">Sign in to follow</a>
+    {% endif %}
+</article>

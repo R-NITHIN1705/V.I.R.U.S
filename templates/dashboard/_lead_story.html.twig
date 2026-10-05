@@ -1,0 +1,17 @@
+{% set is_read = readArticleIds is defined and article.id in readArticleIds|keys %}
+{% set is_bookmarked = bookmarkedArticleIds is defined and article.id in bookmarkedArticleIds|keys %}
+<article class="virus-lead-card news-card news-card--primary {{ is_read ? 'article-read' : 'article-unread' }}" data-article-id="{{ article.id }}" data-searchable="{{ article.title|lower }} {{ article.summary|default('')|lower }}" data-enrichment-status="{{ article.enrichmentStatus ? article.enrichmentStatus.value : 'complete' }}" data-title-default="{{ article.title|e('html_attr') }}" data-summary-default="{{ article.summary|default('')|e('html_attr') }}" {% if article.translations is not null %}data-translations="{{ article.translations|json_encode|e('html_attr') }}"{% endif %}>
+    <div class="virus-lead-copy">
+        {% include 'components/_article_topic_tags.html.twig' with {article: article, size: 'topic-tag--primary'} %}
+        <h2 id="lead-title"><a class="article-link" data-article-id="{{ article.id }}" data-lang-title href="{{ path('app_story', {id: article.id}) }}">{{ article.title }}</a></h2>
+        {% if article.summary %}<p data-lang-summary>{{ article.summary }}</p>{% endif %}
+        <div class="virus-story-meta"><span>{{ article.source.name }}</span><i></i><time class="timeago" datetime="{{ article.publishedAt ? article.publishedAt|date('c') : article.fetchedAt|date('c') }}">{{ article.publishedAt ? article.publishedAt|date('M j, H:i') : article.fetchedAt|date('M j, H:i') }}</time></div>
+        <div class="virus-lead-actions">
+            <a class="virus-primary-button" href="{{ path('app_story', {id: article.id}) }}">Understand story <span aria-hidden="true">→</span></a>
+            <a class="story-original-link" href="{{ article.url }}" target="_blank" rel="noopener">Original report ↗</a>
+            {% include 'components/_bookmark_button.html.twig' with {article: article, isBookmarked: is_bookmarked} %}
+        </div>
+    </div>
+    <a class="virus-lead-art article-photo article-image-frame" href="{{ path('app_story',{id:article.id}) }}" aria-label="Open {{ article.title }}">{% include 'components/_provenance_image.html.twig' with {article: article, fetchpriority: 'high'} %}</a>
+    <div class="article-content-area" id="article-content-{{ article.id }}"></div>
+</article>

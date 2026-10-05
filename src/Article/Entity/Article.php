@@ -1,0 +1,497 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Article\Entity;
+
+use App\Article\ValueObject\EnrichmentStatus;
+use App\Article\ValueObject\FullTextStatus;
+use App\Article\ValueObject\ImageType;
+use App\Article\ValueObject\Url;
+use App\Shared\Entity\Category;
+use App\Shared\ValueObject\EnrichmentMethod;
+use App\Source\Entity\Source;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity]
+#[ORM\Table(name: 'article')]
+#[ORM\Index(name: 'idx_article_fingerprint', columns: ['fingerprint'])]
+#[ORM\Index(name: 'idx_article_published_at', columns: ['published_at'])]
+#[ORM\Index(name: 'idx_article_url', columns: ['url'])]
+#[ORM\Index(name: 'idx_article_sentiment_score', columns: ['sentiment_score'])]
+class Article
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\Column(length: 512)]
+    private string $title;
+
+    #[ORM\Column(length: 2048, unique: true)]
+    private string $url;
+
+    #[ORM\Column(length: 2048, nullable: true)]
+    private ?string $imageUrl = null;
+
+    #[ORM\Column(length: 30, enumType: ImageType::class, options: [
+        'default' => 'PLACEHOLDER',
+    ])]
+    private ImageType $imageType = ImageType::Placeholder;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $imageAttribution = null;
+
+    #[ORM\Column(length: 512, nullable: true)]
+    private ?string $imageAlt = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $contentRaw = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $contentText = null;
+
+    #[ORM\Column(length: 1000, nullable: true)]
+    private ?string $summary = null;
+
+    #[ORM\Column(length: 64, nullable: true)]
+    private ?string $fingerprint = null;
+
+    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    private ?float $score = null;
+
+    #[ORM\Column(type: Types::FLOAT, nullable: true)]
+    private ?float $sentimentScore = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private Source $source;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Category $category = null;
+
+    #[ORM\Column(length: 20, nullable: true, enumType: EnrichmentMethod::class)]
+    private ?EnrichmentMethod $enrichmentMethod = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $aiModelUsed = null;
+
+    #[ORM\Column(length: 20, nullable: true, enumType: EnrichmentStatus::class)]
+    private ?EnrichmentStatus $enrichmentStatus = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $publishedAt = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $titleOriginal = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $summaryOriginal = null;
+
+    /**
+     * Translations map: {"de": {"title": "...", "summary": "..."}, "en": {...}, "fr": {...}}
+     *
+     * @var array<string, array{title: string, summary: string|null}>|null
+     */
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $translations = null;
+
+    /**
+     * @var list<string>|null
+     */
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $keywords = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $contentFullText = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $contentFullHtml = null;
+
+    #[ORM\Column(length: 20, nullable: true, enumType: FullTextStatus::class)]
+    private ?FullTextStatus $fullTextStatus = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $embedding = null;
+
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private \DateTimeImmutable $fetchedAt;
+
+    public function __construct(
+        string $title,
+        string $url,
+        Source $source,
+        \DateTimeImmutable $fetchedAt,
+    ) {
+        new Url($url); // validate URL format
+        $this->title = $title;
+        $this->url = $url;
+        $this->source = $source;
+        $this->fetchedAt = $fetchedAt;
+    }
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getTitle(): string
+    {
+        return $this->title;
+    }
+
+    public function getUrl(): string
+    {
+        return $this->url;
+    }
+
+    public function getImageUrl(): ?string
+    {
+        return $this->imageUrl;
+    }
+
+    public function setImageUrl(?string $imageUrl): void
+    {
+        $imageUrl = $imageUrl !== null ? trim($imageUrl) : null;
+        if ($imageUrl === null || strlen($imageUrl) > 2048 || filter_var($imageUrl, FILTER_VALIDATE_URL) === false) {
+            $this->imageUrl = null;
+            $this->imageType = ImageType::Placeholder;
+            $this->imageAttribution = null;
+            $this->imageAlt = null;
+
+            return;
+        }
+
+        $scheme = strtolower((string) parse_url($imageUrl, PHP_URL_SCHEME));
+        if (! in_array($scheme, ['http', 'https'], true)) {
+            $this->imageUrl = null;
+            $this->imageType = ImageType::Placeholder;
+            $this->imageAttribution = null;
+            $this->imageAlt = null;
+
+            return;
+        }
+
+        $this->setImageAsset($imageUrl, ImageType::Source, $this->source->getName(), $this->title);
+    }
+
+    public function getImageType(): ImageType
+    {
+        return $this->imageType;
+    }
+
+    public function getImageAttribution(): ?string
+    {
+        return $this->imageAttribution;
+    }
+
+    public function getImageAlt(): ?string
+    {
+        return $this->imageAlt;
+    }
+
+    public function setImageAsset(?string $imageUrl, ImageType $imageType, ?string $imageAttribution, ?string $imageAlt): void
+    {
+        if ($this->imageUrl !== null && $this->imagePriority($this->imageType) > $this->imagePriority($imageType)) {
+            return;
+        }
+
+        $imageUrl = $imageUrl !== null ? trim($imageUrl) : null;
+        $isLocalEditorialAsset = $imageUrl !== null
+            && preg_match('#^/images/editorial/[a-z0-9-]+\.(jpg|png|svg)$#i', $imageUrl) === 1;
+        $isRemoteAsset = $imageUrl !== null
+            && filter_var($imageUrl, FILTER_VALIDATE_URL) !== false
+            && in_array(strtolower((string) parse_url($imageUrl, PHP_URL_SCHEME)), ['http', 'https'], true);
+
+        if ($imageUrl === null || strlen($imageUrl) > 2048 || (! $isLocalEditorialAsset && ! $isRemoteAsset)) {
+            $this->imageUrl = null;
+            $this->imageType = ImageType::Placeholder;
+            $this->imageAttribution = null;
+            $this->imageAlt = null;
+
+            return;
+        }
+
+        $this->imageUrl = $imageUrl;
+        $this->imageType = $imageType;
+        $this->imageAttribution = $imageAttribution !== null ? mb_substr(trim($imageAttribution), 0, 255) : null;
+        $this->imageAlt = $imageAlt !== null ? mb_substr(trim($imageAlt), 0, 512) : $this->title;
+    }
+
+    public function getContentRaw(): ?string
+    {
+        return $this->contentRaw;
+    }
+
+    public function setContentRaw(?string $contentRaw): void
+    {
+        $this->contentRaw = $contentRaw;
+    }
+
+    public function getContentText(): ?string
+    {
+        return $this->contentText;
+    }
+
+    public function setContentText(?string $contentText): void
+    {
+        $this->contentText = $contentText;
+    }
+
+    public function getSummary(): ?string
+    {
+        return $this->summary;
+    }
+
+    public function setSummary(?string $summary): void
+    {
+        $this->summary = $summary;
+    }
+
+    public function getFingerprint(): ?string
+    {
+        return $this->fingerprint;
+    }
+
+    public function setFingerprint(?string $fingerprint): void
+    {
+        $this->fingerprint = $fingerprint;
+    }
+
+    public function getScore(): ?float
+    {
+        return $this->score;
+    }
+
+    public function setScore(?float $score): void
+    {
+        if ($score !== null && ($score < 0.0 || $score > 1.0)) {
+            throw new \InvalidArgumentException(sprintf('Score must be between 0.0 and 1.0, got %f', $score));
+        }
+
+        $this->score = $score;
+    }
+
+    public function getSentimentScore(): ?float
+    {
+        return $this->sentimentScore;
+    }
+
+    public function setSentimentScore(?float $sentimentScore): void
+    {
+        if ($sentimentScore !== null && ($sentimentScore < -1.0 || $sentimentScore > 1.0)) {
+            throw new \InvalidArgumentException(sprintf('Sentiment score must be between -1.0 and 1.0, got %f', $sentimentScore));
+        }
+
+        $this->sentimentScore = $sentimentScore;
+    }
+
+    public function getSource(): Source
+    {
+        return $this->source;
+    }
+
+    public function getCategory(): ?Category
+    {
+        return $this->category;
+    }
+
+    public function setCategory(?Category $category): void
+    {
+        $this->category = $category;
+    }
+
+    public function getEnrichmentMethod(): ?EnrichmentMethod
+    {
+        return $this->enrichmentMethod;
+    }
+
+    public function setEnrichmentMethod(?EnrichmentMethod $enrichmentMethod): void
+    {
+        $this->enrichmentMethod = $enrichmentMethod;
+    }
+
+    public function getAiModelUsed(): ?string
+    {
+        return $this->aiModelUsed;
+    }
+
+    public function setAiModelUsed(?string $aiModelUsed): void
+    {
+        $this->aiModelUsed = $aiModelUsed;
+    }
+
+    public function getEnrichmentStatus(): ?EnrichmentStatus
+    {
+        return $this->enrichmentStatus;
+    }
+
+    /**
+     * Transition enrichment status with guard: null->Pending, Pending->Complete.
+     * Use {@see resetEnrichmentStatus()} to re-enqueue a completed article.
+     */
+    public function setEnrichmentStatus(EnrichmentStatus $enrichmentStatus): void
+    {
+        $this->guardEnrichmentTransition($enrichmentStatus);
+        $this->enrichmentStatus = $enrichmentStatus;
+    }
+
+    /**
+     * Reset enrichment status to null so the article can be re-enqueued.
+     * Used by backfill/re-enrichment commands before setting Pending again.
+     */
+    public function resetEnrichmentStatus(): void
+    {
+        $this->enrichmentStatus = null;
+    }
+
+    public function getPublishedAt(): ?\DateTimeImmutable
+    {
+        return $this->publishedAt;
+    }
+
+    public function setPublishedAt(?\DateTimeImmutable $publishedAt): void
+    {
+        $this->publishedAt = $publishedAt;
+    }
+
+    public function getTitleOriginal(): ?string
+    {
+        return $this->titleOriginal;
+    }
+
+    public function setTitleOriginal(?string $titleOriginal): void
+    {
+        $this->titleOriginal = $titleOriginal;
+    }
+
+    public function getSummaryOriginal(): ?string
+    {
+        return $this->summaryOriginal;
+    }
+
+    public function setSummaryOriginal(?string $summaryOriginal): void
+    {
+        $this->summaryOriginal = $summaryOriginal;
+    }
+
+    public function setTitle(string $title): void
+    {
+        $this->title = $title;
+    }
+
+    /**
+     * @return list<string>|null
+     */
+    public function getKeywords(): ?array
+    {
+        return $this->keywords;
+    }
+
+    /**
+     * @param list<string>|null $keywords
+     */
+    public function setKeywords(?array $keywords): void
+    {
+        $this->keywords = $keywords;
+    }
+
+    /**
+     * @return array<string, array{title: string, summary: string|null, keywords?: list<string>}>|null
+     */
+    public function getTranslations(): ?array
+    {
+        return $this->translations;
+    }
+
+    /**
+     * @param array<string, array{title: string, summary: string|null, keywords?: list<string>}>|null $translations
+     */
+    public function setTranslations(?array $translations): void
+    {
+        $this->translations = $translations;
+    }
+
+    /**
+     * @return array{title: string, summary: string|null}|null
+     */
+    public function getTranslation(string $lang): ?array
+    {
+        return $this->translations[$lang] ?? null;
+    }
+
+    public function getContentFullText(): ?string
+    {
+        return $this->contentFullText;
+    }
+
+    public function setContentFullText(?string $contentFullText): void
+    {
+        $this->contentFullText = $contentFullText;
+    }
+
+    public function getContentFullHtml(): ?string
+    {
+        return $this->contentFullHtml;
+    }
+
+    public function setContentFullHtml(?string $contentFullHtml): void
+    {
+        $this->contentFullHtml = $contentFullHtml;
+    }
+
+    public function getFullTextStatus(): ?FullTextStatus
+    {
+        return $this->fullTextStatus;
+    }
+
+    public function setFullTextStatus(?FullTextStatus $fullTextStatus): void
+    {
+        $this->fullTextStatus = $fullTextStatus;
+    }
+
+    public function getEmbedding(): ?string
+    {
+        return $this->embedding;
+    }
+
+    public function setEmbedding(?string $embedding): void
+    {
+        $this->embedding = $embedding;
+    }
+
+    public function getFetchedAt(): \DateTimeImmutable
+    {
+        return $this->fetchedAt;
+    }
+
+    private function imagePriority(ImageType $imageType): int
+    {
+        return match ($imageType) {
+            ImageType::Placeholder => 0,
+            ImageType::GeneratedIllustration => 1,
+            ImageType::LicensedStock => 2,
+            ImageType::Provider => 3,
+            ImageType::Source => 4,
+        };
+    }
+
+    private function guardEnrichmentTransition(EnrichmentStatus $target): void
+    {
+        $current = $this->enrichmentStatus;
+
+        $allowed = ! $current instanceof EnrichmentStatus && $target === EnrichmentStatus::Pending
+            || $current === EnrichmentStatus::Pending && $target === EnrichmentStatus::Complete;
+
+        if (! $allowed) {
+            throw new \LogicException(sprintf(
+                'Invalid enrichment status transition from %s to %s',
+                $current instanceof EnrichmentStatus ? $current->value : 'null',
+                $target->value,
+            ));
+        }
+    }
+}

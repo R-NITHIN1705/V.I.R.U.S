@@ -1,0 +1,21 @@
+{% set image = article_image(article) %}
+<img
+    src="{{ image.url }}"
+    alt="{{ image.alt }}"
+    class="provenance-image"
+    data-provenance-image
+    data-image-type="{{ image.type }}"
+    data-fallback-url="{{ image.fallbackUrl }}"
+    data-fallback-alt="{{ image.fallbackAlt }}"
+    data-fallback-type="{{ image.fallbackType }}"
+    data-fallback-badge="{{ image.fallbackBadge }}"
+    data-placeholder-url="{{ image.placeholderUrl }}"
+    data-placeholder-alt="{{ image.placeholderAlt }}"
+    data-placeholder-type="{{ image.placeholderType }}"
+    data-placeholder-badge="{{ image.placeholderBadge }}"
+    loading="{{ loading|default('lazy') }}"
+    fetchpriority="{{ fetchpriority|default('auto') }}"
+    decoding="async"
+    referrerpolicy="no-referrer"
+>
+<span class="image-provenance-badge" data-image-provenance title="{{ image.badge }}">{{ image.badge }}</span>

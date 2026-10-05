@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Explore · V.I.R.U.S.{% endblock %}
+{% block body_class %}virus-explore-page{% endblock %}
+
+{% block body %}
+<main class="explore-shell">
+    <button class="explore-back history-back" type="button" title="Go back" aria-label="Go back" data-history-back>← Back</button>
+    <header class="explore-heading">
+        <span class="virus-live"><i></i> YOUR WORLD, YOUR WAY</span>
+        <h1>What do you want<br><em>to explore?</em></h1>
+        <p>Choose a topic or source to focus the real stories in your feed.</p>
+        <form action="{{ path('app_search') }}" method="get" class="explore-search discover-search" role="search">
+            <label for="explore-query">Search news</label>
+            <div><input id="explore-query" name="q" type="search" placeholder="Search topic, person, event, company, place…" required><button type="submit">Search <span aria-hidden="true">→</span></button></div>
+        </form>
+    </header>
+
+    <section class="explore-group" id="your-topics" aria-labelledby="your-topics-title">
+        <div class="explore-group-heading"><h2 id="your-topics-title">Your topics</h2><span>{{ followedTopics|length }} followed</span></div>
+        {% if app.user %}
+            {% if followedTopics is not empty %}
+                <div class="explore-discover-grid">
+                    {% for hub in topicHubs %}
+                        {% if hub.slug in followedTopics %}
+                            {% include 'components/topic_hub/_discover_card.html.twig' with {hub: hub, isFollowed: true} only %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="explore-empty">Follow a topic below to build your personal list. Your selected topics stay at the top of Explore.</p>
+            {% endif %}
+        {% else %}
+            <p class="explore-empty"><a href="{{ path('app_login') }}">Sign in</a> to follow topics and keep them here.</p>
+        {% endif %}
+    </section>
+
+    <section class="explore-group" aria-labelledby="explore-topics-title">
+        <div class="explore-group-heading"><h2 id="explore-topics-title">Discover</h2><span>{{ topicHubs|length + categories|length }} topics</span></div>
+        {% if topicHubs is not empty or categories is not empty %}
+            <div class="explore-discover-grid">
+                {% for hub in topicHubs %}
+                    {% include 'components/topic_hub/_discover_card.html.twig' with {hub: hub, isFollowed: hub.slug in followedTopics} only %}
+                {% endfor %}
+                {% for category in categories %}
+                    <a class="explore-discover-card" href="{{ path('app_dashboard', {category: category.slug}) }}" style="--discover-accent: {{ category.color }}">
+                        <span class="explore-discover-card-icon" aria-hidden="true">{% include 'components/topic_hub/_discover_icon.html.twig' with {icon: 'globe'} only %}</span>
+                        <span class="explore-discover-card-copy"><strong>{{ category.name }}</strong><span>Browse reporting from this topic in your feed.</span></span>
+                        <span class="explore-discover-card-cta">Explore <span aria-hidden="true">→</span></span>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="explore-empty">No categories are configured yet. Stories are still available in the <a href="{{ path('app_dashboard') }}">world feed</a>.</p>
+        {% endif %}
+    </section>
+
+    <section class="explore-group" aria-labelledby="explore-sources-title">
+        <div class="explore-group-heading"><h2 id="explore-sources-title">Follow a source</h2><a href="{{ path('app_sources') }}">Manage sources <span aria-hidden="true">→</span></a></div>
+        {% if sources is not empty %}
+            <div class="explore-source-list">
+                {% for source in sources %}
+                    <a class="explore-source" href="{{ path('app_dashboard', {source: source.id}) }}"><span class="explore-source-mark" aria-hidden="true">{{ source.name|first|upper }}</span><span><strong>{{ source.name }}</strong><small>{{ source.language|default('News source') }}</small></span><span class="explore-source-arrow" aria-hidden="true">→</span></a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="explore-empty">No active sources yet. <a href="{{ path('app_sources') }}">Add a source</a> to bring stories into V.I.R.U.S.</p>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Profile · V.I.R.U.S.{% endblock %}
+{% block body_class %}virus-profile-page{% endblock %}
+
+{% block body %}
+<main class="page-shell virus-profile-shell">
+    <header class="page-heading">
+        <div><p class="eyebrow">YOUR ACCOUNT</p><h1>Profile</h1><p>Your account and followed news topics.</p></div>
+        <a class="lux-button secondary" href="{{ path('app_settings') }}">Account settings</a>
+    </header>
+
+    <section class="virus-profile-card" aria-labelledby="profile-details-title">
+        <h2 id="profile-details-title">Account details</h2>
+        <dl>
+            <div><dt>Name</dt><dd>{{ profile.fullName ?: 'Not set' }}</dd></div>
+            <div><dt>Email</dt><dd>{{ profile.email }}</dd></div>
+        </dl>
+    </section>
+
+    <section class="virus-profile-card" aria-labelledby="profile-topics-title">
+        <div class="explore-group-heading"><h2 id="profile-topics-title">Your topics</h2><a href="{{ path('app_explore') }}">Manage topics →</a></div>
+        {% if followedTopics is empty %}
+            <p class="explore-empty">You haven't followed any topics yet. <a href="{{ path('app_explore') }}#your-topics">Choose topics</a>.</p>
+        {% else %}
+            <div class="virus-profile-topic-list">
+                {% for hub in topicHubs %}
+                    {% if hub.slug in followedTopics %}<a class="topic-hub-chip" href="{{ path('app_topic_hub', {slug: hub.slug}) }}">{{ hub.title }}</a>{% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}

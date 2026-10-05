@@ -1,0 +1,20 @@
+{% set usedSlugs = [] %}
+<div class="article-topic-tags" aria-label="Story topics">
+    {% if article.category %}
+        {% set categorySlug = article.category.slug %}
+        {% set usedSlugs = usedSlugs|merge([categorySlug|lower]) %}
+        {% include 'components/_topic_tag.html.twig' with {label: article.category.name, categorySlug: categorySlug, accentColor: article.category.color, size: size|default('')} only %}
+    {% else %}
+        {% set usedSlugs = usedSlugs|merge(['general']) %}
+        {% include 'components/_topic_tag.html.twig' with {label: 'General', categorySlug: 'general', size: size|default('')} only %}
+    {% endif %}
+    {% if article.keywords is not null and article.keywords is not empty %}
+        {% for keyword in article.keywords|slice(0, 4) %}
+            {% set keywordSlug = keyword|lower|replace({' ': '-'}) %}
+            {% if keywordSlug not in usedSlugs and topic_hub_route(keyword) %}
+                {% set usedSlugs = usedSlugs|merge([keywordSlug]) %}
+                {% include 'components/_topic_tag.html.twig' with {label: keyword, categorySlug: keyword, size: size|default('')} only %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+</div>

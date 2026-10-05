@@ -1,0 +1,79 @@
+{# Expects: article (Article entity), readArticleIds (optional array<int, true>), bookmarkedArticleIds (optional array<int, true>) #}
+{% set is_read = readArticleIds is defined and article.id in readArticleIds|keys %}
+{% set is_bookmarked = bookmarkedArticleIds is defined and article.id in bookmarkedArticleIds|keys %}
+<div class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow news-card news-card--{{ variant|default('compact') }} {{ is_read ? 'article-read' : 'article-unread' }}"
+    data-article-id="{{ article.id }}"
+    data-enrichment-status="{{ article.enrichmentStatus ? article.enrichmentStatus.value : 'complete' }}"
+    data-searchable="{{ article.title|lower }} {{ article.summary|default('')|lower }}"
+    data-title-default="{{ article.title|e('html_attr') }}"
+    data-summary-default="{{ article.summary|default('')|e('html_attr') }}"
+    {% if article.translations is not null %}
+        data-translations="{{ article.translations|json_encode|e('html_attr') }}"
+    {% endif %}
+>
+    <div class="card-body p-4">
+        <div class="flex items-start gap-2">
+            <div class="flex-1 min-w-0">
+                <h3 class="card-title text-base">
+                    <a href="{{ article.url }}" target="_blank" rel="noopener" class="link link-hover article-link" data-article-id="{{ article.id }}" data-lang-title>
+                        {{ article.title }}
+                    </a>
+                </h3>
+                {% if article.summary %}
+                    <p class="text-sm text-base-content/70 mt-1" data-lang-summary>
+                        {{ article.summary }}
+                    </p>
+                {% endif %}
+                {% if article.keywords is not null and article.keywords is not empty %}
+                    <div class="flex flex-wrap gap-1 mt-1" data-lang-keywords>
+                        {% for keyword in article.keywords %}
+                            <span class="badge badge-outline badge-xs">{{ keyword }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="flex items-center gap-1">
+                {% include 'components/_bookmark_button.html.twig' with { article: article, isBookmarked: is_bookmarked } %}
+                {% if article.sentimentScore is not null and (article.sentimentScore >= 0.7 or article.sentimentScore <= -0.7) %}
+                    <div class="tooltip tooltip-left"
+                         data-tip="Sentiment: {{ article.sentimentScore > 0 ? '+' : '' }}{{ (article.sentimentScore * 100)|round }}%">
+                        <span class="text-sm">{{ article.sentimentScore >= 0.7 ? '☀️' : '⚡' }}</span>
+                    </div>
+                {% endif %}
+                {% if article.score %}
+                    {% set breakdown = score_breakdown(article) %}
+                    <div class="{{ breakdown ? 'tooltip tooltip-left' : '' }}"
+                         {% if breakdown %}data-tip="{{ (article.score * 100)|round }}% — Recency {{ breakdown.recency }}% | Category {{ breakdown.category }}% | Source {{ breakdown.source }}% | Enrichment {{ breakdown.enrichment }}%{{ article.sentimentScore is not null ? ' | Sentiment ' ~ (article.sentimentScore > 0 ? '+' : '') ~ (article.sentimentScore * 100)|round ~ '%' : '' }}"{% endif %}>
+                        <span class="inline-block w-2 h-2 rounded-full {{ article.score > 0.7 ? 'bg-primary' : (article.score > 0.4 ? 'bg-secondary' : 'bg-base-300') }}"></span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {# Inline reader area — populated by htmx on "Read" click #}
+        <div class="article-content-area" id="article-content-{{ article.id }}"></div>
+        <div class="flex items-center gap-2 mt-2 text-xs">
+            <span class="badge badge-outline badge-sm max-w-[120px] truncate">{{ article.source.name }}</span>
+            {% include 'components/_article_topic_tags.html.twig' with {article: article} %}
+            {% if variant|default('') == 'historical' %}<span class="news-card-historical-label">Historical</span>{% endif %}
+            <time datetime="{{ article.publishedAt ? article.publishedAt|date('c') : article.fetchedAt|date('c') }}" class="text-base-content/50 timeago">
+                {{ article.publishedAt ? article.publishedAt|date('Y-m-d H:i') : article.fetchedAt|date('Y-m-d H:i') }}
+            </time>
+            {% set reading_minutes = article.contentText|reading_time %}
+            {% if reading_minutes %}
+                <span class="text-base-content/50">{{ reading_minutes }} min read</span>
+            {% endif %}
+            {% if article.contentFullHtml or article.contentFullText %}
+                <button class="btn btn-xs btn-ghost text-info article-read-toggle"
+                        hx-get="{{ path('app_article_content', {id: article.id}) }}"
+                        hx-target="#article-content-{{ article.id }}"
+                        hx-swap="innerHTML"
+                        data-expanded="false"
+                        hx-on::before-request="if(this.dataset.expanded === 'true') { document.getElementById('article-content-{{ article.id }}').innerHTML = ''; this.dataset.expanded = 'false'; this.textContent = 'Read'; event.preventDefault(); return; } this.dataset.expanded = 'true'; this.textContent = 'Collapse';">
+                    Read
+                </button>
+            {% else %}
+                <a href="{{ article.url }}" target="_blank" rel="noopener" class="btn btn-xs btn-ghost text-info">Read on source →</a>
+            {% endif %}
+        </div>
+    </div>
+</div>

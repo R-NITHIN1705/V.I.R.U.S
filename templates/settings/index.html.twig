@@ -1,0 +1,109 @@
+{% extends 'base.html.twig' %}
+{% block title %}Settings{% endblock %}
+{% block body %}
+    <h1 class="text-2xl font-bold mb-6">Settings</h1>
+
+    <div class="grid gap-4 max-w-lg">
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title text-base">AI assistant</h3>
+                {% if hasOpenrouterKey %}
+                    <span class="badge badge-success">Connected</span>
+                {% else %}
+                    <span class="badge badge-warning">Unavailable</span>
+                    <p class="text-sm text-base-content/50">The assistant can still search your news feed; AI summaries are currently unavailable.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title text-base">Notifications</h3>
+                {% if hasNotifierDsn %}
+                    <span class="badge badge-success">Connected</span>
+                    <div class="mt-2 flex items-center gap-2">
+                        <button
+                            class="btn btn-sm btn-outline"
+                            hx-post="{{ path('app_settings_test_notification') }}"
+                            hx-headers='{"X-CSRF-Token": "{{ csrf_token('test_notification') }}"}'
+                            hx-target="#test-notification-result"
+                            hx-swap="innerHTML"
+                        >
+                            Send Test Notification
+                        </button>
+                        <span id="test-notification-result"></span>
+                    </div>
+                {% else %}
+                    <span class="badge badge-warning">Not connected</span>
+                    <p class="text-sm text-base-content/50">Delivery channels are not connected yet. Notifications are still recorded here.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <form class="card bg-base-100 shadow-sm"
+              hx-post="{{ path('app_settings_save') }}"
+              hx-target="#save-result"
+              hx-swap="innerHTML"
+        >
+            <div class="card-body">
+                <h3 class="card-title text-base">News retention</h3>
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('settings_save') }}">
+
+
+
+                <div class="form-control">
+                    <label class="label" for="setting-retention-articles">
+                        <span class="label-text">Article Retention (days)</span>
+                        {% if settings.retention_articles.isOverridden %}
+                            <span class="badge badge-info badge-xs">overridden</span>
+                        {% else %}
+                            <span class="badge badge-ghost badge-xs">default</span>
+                        {% endif %}
+                    </label>
+                    <input type="number" id="setting-retention-articles" name="retention_articles"
+                           value="{{ settings.retention_articles.value }}"
+                           class="input input-bordered input-sm"
+                           min="1" max="365">
+                    <label class="label">
+                        <span class="label-text-alt text-base-content/50">Days to keep articles before cleanup</span>
+                    </label>
+                </div>
+
+                <div class="form-control">
+                    <label class="label" for="setting-retention-logs">
+                        <span class="label-text">Log Retention (days)</span>
+                        {% if settings.retention_logs.isOverridden %}
+                            <span class="badge badge-info badge-xs">overridden</span>
+                        {% else %}
+                            <span class="badge badge-ghost badge-xs">default</span>
+                        {% endif %}
+                    </label>
+                    <input type="number" id="setting-retention-logs" name="retention_logs"
+                           value="{{ settings.retention_logs.value }}"
+                           class="input input-bordered input-sm"
+                           min="1" max="365">
+                    <label class="label">
+                        <span class="label-text-alt text-base-content/50">Days to keep notification and digest logs</span>
+                    </label>
+                </div>
+
+                <div class="card-actions mt-2 flex items-center gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm">Save Settings</button>
+                    <span id="save-result"></span>
+                </div>
+            </div>
+        </form>
+
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title text-base">Quick Links</h3>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ path('app_pipelines') }}" class="btn btn-sm btn-outline">Pipeline Status</a>
+                    <a href="{{ path('app_sources') }}" class="btn btn-sm btn-outline">Sources</a>
+                    <a href="{{ path('app_alerts') }}" class="btn btn-sm btn-outline">Alert Rules</a>
+                    <a href="{{ path('app_digests') }}" class="btn btn-sm btn-outline">Digests</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,356 @@
+/* Dark editorial homepage, following the supplied V.I.R.U.S. reference. */
+.virus-home {
+    --virus-bg: #030a13;
+    --virus-panel: #07111f;
+    --virus-panel-raised: #0b1a2c;
+    --virus-line: rgba(147, 177, 215, .2);
+    --virus-line-strong: rgba(168, 196, 232, .38);
+    --virus-text: #eef4ff;
+    --virus-muted: #91a3bc;
+    --virus-blue: #48a5ff;
+    --virus-red: #ff525c;
+    --virus-amber: #ffb443;
+    background: var(--virus-bg) !important;
+    color: var(--virus-text);
+    color-scheme: dark;
+}
+
+.virus-main { width: 100%; padding: 0 !important; background: var(--virus-bg); }
+.virus-app { min-height: 100vh; padding-bottom: 24px; background: radial-gradient(ellipse at 50% -12%, rgba(19, 55, 91, .22), transparent 42%), var(--virus-bg); }
+.virus-header { position: sticky; top: 0; z-index: 40; min-height: 78px; display: flex; align-items: center; gap: 26px; padding: 12px clamp(18px, 4vw, 58px); border-bottom: 1px solid var(--virus-line); background: rgba(3, 10, 19, .92); backdrop-filter: blur(18px); }
+.virus-brand { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 12px; color: var(--virus-text); text-decoration: none; }
+.virus-brand-mark { width: 43px; height: 43px; fill: none; stroke: #54aaff; stroke-width: 1.25; }
+.virus-brand strong { display: block; color: #dfeaff; font-size: 21px; font-weight: 600; letter-spacing: .25em; line-height: 1.1; }
+.virus-brand small { display: block; margin-top: 5px; color: #afbdd1; font-size: 10px; letter-spacing: .015em; white-space: nowrap; }
+.virus-desktop-nav { display: flex; align-items: center; justify-content: center; gap: clamp(10px, 1.25vw, 22px); flex: 1 1 auto; }
+.virus-desktop-nav a { color: #9eacc0; font-size: 12px; text-decoration: none; transition: color .16s ease; white-space: nowrap; }
+.virus-desktop-nav a:hover, .virus-desktop-nav a.is-active { color: #f3f7ff; }
+.virus-desktop-nav a.is-active { position: relative; }
+.virus-desktop-nav a.is-active::after { position: absolute; right: 0; bottom: -29px; left: 0; height: 2px; background: var(--virus-blue); content: ''; }
+.virus-header-tools { display: flex; flex: 0 0 auto; align-items: center; gap: 13px; }
+.virus-search { height: 37px; display: flex; align-items: center; gap: 8px; width: clamp(150px, 17vw, 225px); padding: 0 10px; border: 1px solid var(--virus-line); border-radius: 999px; background: rgba(9, 21, 37, .86); }
+.virus-search svg { width: 15px; height: 15px; flex: 0 0 auto; fill: none; stroke: #8295ad; stroke-width: 1.7; }
+.virus-search input { min-width: 0; flex: 1 1 auto; border: 0; outline: none; background: transparent; color: var(--virus-text); font-size: 11px; }
+.virus-search input::placeholder { color: #778aa3; }
+.virus-search kbd { display: none; color: #657991; font: 10px inherit; }
+.virus-icon-link { width: 34px; height: 34px; display: grid; place-items: center; color: #d6e1f3; }
+.virus-icon-link svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.virus-avatar { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid #294462; border-radius: 50%; background: #0b1a2c; color: #dceaff; font-size: 13px; cursor: pointer; }
+.virus-account-menu { right: 0; width: 190px; margin-top: 9px; border: 1px solid var(--virus-line); border-radius: 13px; background: #091522; color: var(--virus-text); }
+.virus-account-menu form { padding: 0; }
+.virus-account-menu button { width: 100%; padding: 8px 12px; color: inherit; text-align: left; }
+.virus-mobile-menu { position: relative; display: none; }
+.virus-mobile-menu summary { width: 35px; height: 35px; display: flex; flex-direction: column; justify-content: center; gap: 5px; padding: 8px; border: 1px solid var(--virus-line); border-radius: 50%; cursor: pointer; list-style: none; }
+.virus-mobile-menu summary::-webkit-details-marker { display: none; }
+.virus-mobile-menu summary span { width: 100%; height: 1px; background: #d6e1f3; }
+.virus-mobile-menu nav { position: absolute; top: 43px; right: 0; z-index: 60; width: 200px; display: grid; padding: 7px; border: 1px solid var(--virus-line); border-radius: 14px; background: #091522; box-shadow: 0 18px 35px rgba(0, 0, 0, .45); }
+.virus-mobile-menu nav a { padding: 10px 12px; border-radius: 8px; color: #d5e0f1; font-size: 13px; text-decoration: none; }
+.virus-mobile-menu nav a:hover { background: #10243a; }
+
+.virus-content { width: min(1320px, 100%); margin: 0 auto; padding: 0 clamp(18px, 4vw, 58px); }
+.virus-orbit { position: relative; min-height: 375px; display: grid; grid-template-columns: minmax(290px, .82fr) minmax(370px, 1.18fr); align-items: center; overflow: hidden; border-bottom: 1px solid var(--virus-line); }
+.virus-orbit::before { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 76% 48%, rgba(16, 79, 131, .19), transparent 40%), radial-gradient(ellipse at 16% 20%, rgba(15, 42, 68, .17), transparent 35%); content: ''; }
+.virus-orbit-copy { position: relative; z-index: 2; padding: 38px 0 42px; }
+.virus-live { width: fit-content; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid rgba(255, 82, 92, .42); border-radius: 999px; background: rgba(255, 82, 92, .075); color: #ff6d74; font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+.virus-live i, .virus-section-dot { width: 8px; height: 8px; display: inline-block; border-radius: 50%; background: var(--virus-red); box-shadow: 0 0 12px rgba(255, 82, 92, .78); }
+.virus-orbit h1 { margin: 23px 0 12px; color: #eff5ff; font-size: clamp(34px, 4.3vw, 57px); font-weight: 650; letter-spacing: -.045em; line-height: .98; }
+.virus-orbit h1 em { color: #aabbd2; font-style: normal; font-weight: 430; }
+.virus-orbit-copy > p { margin: 0; color: #9aacc3; font-size: 14px; }
+.virus-orbit-count { display: flex; flex-direction: column; gap: 1px; margin-top: 24px; }
+.virus-orbit-count strong { color: #f2f6ff; font-size: 22px; font-weight: 550; letter-spacing: -.02em; }
+.virus-orbit-count span { color: #778da8; font-size: 11px; }
+.virus-orbit-meta { display: flex; flex-wrap: wrap; gap: 8px 15px; margin-top: 20px; color: #9eafc4; font-size: 10px; }
+.virus-orbit-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.virus-orbit-meta .dot { width: 7px; height: 7px; border-radius: 50%; box-shadow: 0 0 9px currentColor; }
+.dot-red { background: #ff5961; color: #ff5961; }.dot-amber { background: #ffbb4e; color: #ffbb4e; }.dot-blue { background: #4f9eff; color: #4f9eff; }
+.virus-orbit-copy .virus-updated { margin-top: 16px; color: #667b95; font-size: 10px; }
+.virus-globe-wrap { position: relative; min-width: 0; height: 365px; display: grid; place-items: center; }
+.virus-globe { width: min(100%, 565px); height: auto; overflow: visible; }
+.orbit-rings { stroke: #488ed5; stroke-opacity: .28; stroke-width: .8; stroke-dasharray: 2 7; }
+.globe-grid { stroke: #65a8e7; stroke-opacity: .34; stroke-width: .8; }
+.globe-stars { fill: #b7daff; opacity: .86; }
+.virus-orbit-caption { position: absolute; right: 2%; bottom: 24px; display: flex; align-items: center; gap: 8px; color: #738ba7; font-size: 10px; letter-spacing: .04em; }
+.caption-pulse { width: 6px; height: 6px; border-radius: 50%; background: #59a8ff; box-shadow: 0 0 9px #59a8ff; }
+
+.virus-lead-section { padding: 26px 0 0; }
+.virus-section-kicker { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; color: var(--virus-red); font-size: 12px; font-weight: 750; letter-spacing: .12em; }
+.virus-section-kicker a { margin-left: auto; color: #bfcee2; font-size: 11px; font-weight: 450; letter-spacing: 0; text-decoration: none; }
+.virus-section-kicker a:hover, .virus-see-all:hover { color: #fff; }
+.virus-lead-card { min-height: 230px; display: grid; grid-template-columns: minmax(0, .95fr) minmax(260px, .8fr); gap: 28px; overflow: hidden; padding: 25px 28px 23px; border: 1px solid var(--virus-line-strong); border-radius: 18px; background: linear-gradient(115deg, rgba(8, 19, 33, .98), rgba(4, 13, 24, .95)); box-shadow: 0 16px 44px rgba(0, 0, 0, .17); }
+.virus-lead-copy { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+.virus-lead-category { padding: 4px 8px; border: 1px solid color-mix(in srgb, var(--category-color) 55%, transparent); border-radius: 99px; background: color-mix(in srgb, var(--category-color) 13%, transparent); color: color-mix(in srgb, var(--category-color) 70%, white); font-size: 9px; letter-spacing: .07em; text-transform: uppercase; }
+.virus-lead-copy h2 { max-width: 640px; margin: 13px 0 9px; color: #f0f4fc; font-size: clamp(23px, 2.8vw, 34px); font-weight: 650; letter-spacing: -.025em; line-height: 1.13; }
+.virus-lead-copy h2 a, .virus-trending-card h3 a, .virus-latest-row h3 a { color: inherit; text-decoration: none; }
+.virus-lead-copy h2 a:hover, .virus-trending-card h3 a:hover, .virus-latest-row h3 a:hover { color: #a9d4ff; }
+.virus-lead-copy > p { max-width: 640px; margin: 0; color: #a8b6c9; font-size: 13px; line-height: 1.6; }
+.virus-story-meta { display: flex; align-items: center; gap: 8px; color: #8fa0b6; font-size: 10px; }
+.virus-story-meta i, .latest-row-meta i { width: 3px; height: 3px; border-radius: 50%; background: #657991; }
+.virus-lead-copy .virus-story-meta { margin-top: auto; padding-top: 18px; }
+.virus-lead-actions { display: flex; align-items: center; gap: 8px; margin-top: 13px; }
+.virus-primary-button { min-height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 0 14px; border: 1px solid rgba(70, 157, 250, .65); border-radius: 8px; background: #0b2845; color: #d8ecff; font-size: 11px; font-weight: 600; text-decoration: none; transition: background .16s ease, border-color .16s ease; }
+.virus-primary-button:hover { border-color: #69b4ff; background: #103a60; }
+.virus-lead-actions .btn { width: 34px; height: 34px; min-height: 34px; border: 1px solid var(--virus-line); border-radius: 8px; color: #aebed2; }
+.virus-lead-art { position: relative; min-height: 185px; overflow: hidden; align-self: stretch; border: 1px solid rgba(81, 142, 204, .33); border-radius: 13px; background: radial-gradient(ellipse at 51% 50%, rgba(27, 92, 148, .58), transparent 24%), radial-gradient(ellipse at 50% 110%, rgba(9, 47, 82, .78), transparent 62%), linear-gradient(145deg, #0b2036, #030a13 65%); }
+.virus-lead-art::before, .virus-lead-art::after { position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(circle at 22% 27%, rgba(129, 191, 255, .58) 0 1px, transparent 1.5px), radial-gradient(circle at 75% 23%, rgba(129, 191, 255, .6) 0 1px, transparent 1.5px), radial-gradient(circle at 83% 68%, rgba(129, 191, 255, .45) 0 1px, transparent 1.5px), radial-gradient(circle at 38% 73%, rgba(129, 191, 255, .34) 0 1px, transparent 1.5px); content: ''; }
+.virus-lead-art::after { inset: 16% 15%; border: 1px solid rgba(95, 169, 235, .3); border-radius: 50%; transform: rotate(-24deg) scaleY(.43); }
+.lead-art-orbit { position: absolute; top: 50%; left: 50%; width: 72%; height: 82%; border: 1px solid rgba(105, 181, 248, .42); border-radius: 50%; transform: translate(-50%, -50%) rotate(24deg) scaleY(.48); }
+.lead-art-orbit-two { width: 88%; height: 95%; border-color: rgba(105, 181, 248, .19); transform: translate(-50%, -50%) rotate(-14deg) scaleY(.5); }
+.lead-art-core { position: absolute; top: 50%; left: 50%; width: 102px; height: 102px; border: 1px solid rgba(131, 197, 255, .54); border-radius: 50%; background: radial-gradient(circle at 38% 36%, rgba(62, 145, 221, .43), rgba(4, 17, 30, .1) 66%); box-shadow: 0 0 38px rgba(33, 121, 204, .18), inset 0 0 32px rgba(46, 131, 210, .2); transform: translate(-50%, -50%); }
+.lead-art-index, .lead-art-score, .lead-art-caption { position: absolute; z-index: 2; color: #9dbde0; font-size: 9px; letter-spacing: .13em; }
+.lead-art-index { top: 15px; left: 16px; }.lead-art-score { top: 15px; right: 16px; color: #91c6f7; letter-spacing: .04em; }.lead-art-caption { right: 16px; bottom: 14px; left: 16px; color: #8aa4c2; letter-spacing: .04em; text-align: right; }
+
+.virus-section { padding: 24px 0; border-bottom: 1px solid var(--virus-line); }
+.virus-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 15px; }
+.virus-heading-title { min-width: 0; display: flex; align-items: center; gap: 12px; }
+.virus-heading-title h2 { margin: 0; color: #eaf1fb; font-size: 19px; font-weight: 650; letter-spacing: -.02em; }
+.virus-heading-title p { margin: 3px 0 0; color: #73869f; font-size: 10px; }
+.virus-heading-icon { width: 30px; height: 30px; display: grid; flex: 0 0 auto; place-items: center; border: 1px solid var(--virus-line); border-radius: 9px; color: #9dcfff; font-size: 19px; }
+.trending-icon { color: #ffbd5a; font-size: 20px; }.latest-icon { color: #9bcfff; font-size: 20px; }
+.virus-see-all { display: inline-flex; align-items: center; gap: 8px; color: #bdcbe0; font-size: 11px; text-decoration: none; white-space: nowrap; }
+.virus-trending-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.virus-trending-card { position: relative; min-width: 0; overflow: hidden; border: 1px solid rgba(116, 150, 189, .28); border-radius: 13px; background: #071321; transition: transform .18s ease, border-color .18s ease, background .18s ease; }
+.virus-trending-card:hover { transform: translateY(-2px); border-color: rgba(111, 178, 238, .6); background: #0a1929; }
+.trending-visual { position: relative; height: 105px; overflow: hidden; background: radial-gradient(ellipse at 52% 100%, color-mix(in srgb, var(--story-hue) 45%, #06101c), transparent 58%), linear-gradient(135deg, #0b1d32, #040c16); }
+.trending-visual::before { position: absolute; inset: 0; background: repeating-linear-gradient(135deg, transparent 0 16px, rgba(151, 195, 238, .055) 17px 18px, transparent 19px 31px); content: ''; }
+.trending-visual-orbit { position: absolute; top: 55%; left: 50%; width: 112px; height: 112px; border: 1px solid color-mix(in srgb, var(--story-hue) 74%, #c7e6ff); border-radius: 50%; box-shadow: 0 0 36px color-mix(in srgb, var(--story-hue) 30%, transparent), inset 0 0 27px color-mix(in srgb, var(--story-hue) 25%, transparent); transform: translate(-50%, -50%); }
+.trending-visual-core { position: absolute; top: 55%; left: 50%; width: 59px; height: 59px; border: 1px solid rgba(186, 220, 255, .63); border-radius: 50%; background: radial-gradient(circle at 36% 32%, color-mix(in srgb, var(--story-hue) 44%, #456c97), #07111d 72%); transform: translate(-50%, -50%); }
+.trending-score { position: absolute; top: 10px; right: 10px; color: #d8e8fa; font-size: 10px; }.trending-score small { color: #7c91a9; font-size: 8px; }
+.trending-card-copy { padding: 11px 12px 13px; }
+.virus-mini-category { display: inline-block; overflow: hidden; max-width: 100%; margin-bottom: 5px; color: #81bdf0; font-size: 8px; font-weight: 700; letter-spacing: .08em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+.virus-trending-card h3 { min-height: 42px; margin: 0 0 10px; color: #edf3fc; font-size: 13px; font-weight: 580; line-height: 1.45; }
+.virus-trending-card .virus-story-meta { gap: 6px; font-size: 9px; }
+.virus-trending-card > .btn { position: absolute; top: 66px; right: 8px; z-index: 2; width: 28px; height: 28px; min-height: 28px; border: 1px solid rgba(184, 211, 241, .32); border-radius: 8px; background: rgba(2, 8, 16, .75); color: #c3d5e9; }
+
+.virus-latest-section { padding-top: 26px; border-bottom: 0; }
+.latest-heading { align-items: flex-end; margin-bottom: 17px; }
+.virus-latest-tools { display: flex; align-items: center; gap: 8px; }
+.virus-source-select { position: relative; width: 170px; }
+.virus-source-select > input { width: 100%; height: 31px; padding: 0 28px 0 11px; border: 1px solid var(--virus-line); border-radius: 8px; outline: none; background: #071320; color: #c2d0e4; font-size: 10px; }
+.virus-source-select > input:focus { border-color: rgba(81, 166, 246, .75); }
+.virus-source-select > span { position: absolute; top: 5px; right: 11px; color: #95a8bf; pointer-events: none; }
+.virus-source-select [data-source-filter-dropdown] { position: absolute; top: 36px; right: 0; left: 0; z-index: 30; max-height: 220px; overflow: auto; border: 1px solid var(--virus-line-strong); border-radius: 10px; background: #081523; box-shadow: 0 15px 30px #0008; }
+.virus-source-select [data-source-filter-list] { margin: 0; padding: 5px; list-style: none; }
+.virus-source-select [data-source-filter-list] a, .virus-source-select [data-source-filter-list] span { display: block; padding: 8px 9px; border-radius: 6px; color: #c0cde0; font-size: 10px; text-decoration: none; }
+.virus-source-select [data-source-filter-list] a:hover, .virus-source-select [data-source-filter-list] a.focus { background: #102a43; color: #fff; }
+.virus-category-nav { display: flex; align-items: center; gap: 7px; overflow-x: auto; padding: 0 0 14px; border-bottom: 1px solid var(--virus-line); scrollbar-width: thin; }
+.virus-category-nav > a { flex: 0 0 auto; padding: 6px 11px; border: 1px solid rgba(122, 153, 189, .22); border-radius: 999px; color: #a9b8cc; font-size: 10px; text-decoration: none; transition: .15s ease; }
+.virus-category-nav > a:hover { border-color: rgba(100, 174, 245, .5); color: #e6f2ff; }
+.virus-category-nav > a.is-selected { border-color: #4a9ff2; background: rgba(49, 131, 216, .16); color: #b9dcff; }
+.virus-category-spacer { flex: 1 0 10px; }
+.virus-category-nav > a.virus-filter-chip { border-color: transparent; color: #7f92aa; }
+.virus-category-nav > a.virus-filter-chip.is-selected { border-color: rgba(93, 164, 232, .42); background: rgba(35, 93, 148, .2); color: #bfddfa; }
+.virus-mark-read { flex: 0 0 auto; padding: 6px 2px 6px 7px; border: 0; background: transparent; color: #8197b0; font-size: 9px; cursor: pointer; }
+.virus-mark-read:hover { color: #d9e9fa; }
+.virus-pipeline-note { margin: 12px 0 0; color: #8aa6c2; font-size: 10px; }
+.virus-article-feed { display: flex; flex-direction: column; }
+.virus-latest-row { position: relative; display: grid; grid-template-columns: 17px minmax(0, 1fr) 66px; gap: 13px; padding: 18px 2px 18px 0; border-bottom: 1px solid rgba(115, 145, 178, .17); transition: background .15s ease; }
+.virus-latest-row:hover { background: linear-gradient(90deg, transparent, rgba(24, 54, 84, .2)); }
+.latest-row-marker { display: flex; justify-content: center; padding-top: 5px; }
+.latest-row-marker span { width: 6px; height: 6px; border: 1px solid #56aaff; border-radius: 50%; background: rgba(73, 164, 255, .32); box-shadow: 0 0 10px rgba(64, 152, 241, .43); }
+.article-read .latest-row-marker span { border-color: #54677d; background: #54677d; box-shadow: none; }
+.latest-row-copy { min-width: 0; }
+.latest-row-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin: 0 0 6px; color: #7e91a8; font-size: 9px; }
+.latest-row-meta .virus-mini-category { margin: 0 2px 0 0; }
+.virus-latest-row h3 { margin: 0; color: #e3ebf6; font-size: 15px; font-weight: 590; letter-spacing: -.01em; line-height: 1.38; }
+.virus-latest-row p { max-width: 800px; margin: 6px 0 0; color: #95a7bd; font-size: 11px; line-height: 1.5; }
+.latest-keywords { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.latest-keywords span { padding: 3px 7px; border: 1px solid rgba(127, 157, 191, .18); border-radius: 999px; color: #788ea8; font-size: 8px; }
+.latest-row-actions { display: flex; justify-content: flex-end; align-items: flex-start; gap: 3px; padding-top: 0; }
+.latest-row-actions .btn { width: 29px; height: 29px; min-height: 29px; border: 1px solid transparent; border-radius: 8px; color: #a9bdd4; }
+.latest-row-actions .btn:hover, .latest-open-link:hover { border-color: var(--virus-line); background: #0d1b2b; }
+.latest-open-link { width: 29px; height: 29px; display: grid; place-items: center; border: 1px solid transparent; border-radius: 8px; color: #8396af; font-size: 14px; text-decoration: none; }
+.virus-inline-read { margin-top: 9px; padding: 0; border: 0; background: none; color: #76baff; font-size: 10px; cursor: pointer; }
+.virus-inline-read:hover { color: #c0e1ff; }
+.virus-feed-loader { align-items: center; justify-content: center; gap: 9px; padding: 20px; color: #8195ad; font-size: 10px; }
+.virus-list-empty { padding: 36px 8px; color: #90a2b8; font-size: 12px; text-align: center; }
+.virus-empty-feed { margin: 18px 0 24px; padding: 34px; border: 1px solid var(--virus-line); border-radius: 17px; background: linear-gradient(120deg, #081625, #050d17); }
+.virus-empty-feed h2 { margin: 17px 0 8px; color: #e8f1fc; font-size: 23px; }
+.virus-empty-feed p { margin: 0 0 18px; color: #8fa3bb; font-size: 12px; }
+.virus-footer { padding: 12px 0 6px; color: #586e88; font-size: 9px; letter-spacing: .08em; text-align: center; }
+.virus-bottom-nav { display: none; }
+
+.virus-home .article-read { opacity: .62; }
+.virus-home .article-read:hover { opacity: .85; }
+.virus-home .htmx-swapping { opacity: 0; transition: opacity .2s ease; }
+.virus-home .htmx-indicator { display: none; }
+.virus-home .htmx-request .htmx-indicator, .virus-home .htmx-request.htmx-indicator { display: flex; }
+
+@media (max-width: 1120px) {
+    .virus-header { gap: 18px; }
+    .virus-desktop-nav { display: none; }
+    .virus-header-tools { margin-left: auto; }
+    .virus-mobile-menu { display: block; }
+    .virus-search { width: clamp(150px, 26vw, 240px); }
+}
+@media (max-width: 760px) {
+    .virus-header { min-height: 66px; gap: 9px; padding: 9px 15px; }
+    .virus-brand { gap: 8px; }
+    .virus-brand-mark { width: 35px; height: 35px; }
+    .virus-brand strong { font-size: 16px; letter-spacing: .21em; }
+    .virus-brand small { max-width: 185px; margin-top: 3px; overflow: hidden; font-size: 8px; text-overflow: ellipsis; }
+    .virus-header-tools { gap: 7px; }
+    .virus-search { display: none; }
+    .virus-icon-link { display: none; }
+    .virus-avatar { width: 31px; height: 31px; font-size: 11px; }
+    .virus-content { padding: 0 15px; }
+    .virus-orbit { min-height: 0; grid-template-columns: minmax(0, 1fr); padding-bottom: 18px; }
+    .virus-orbit-copy { padding: 23px 0 0; }
+    .virus-orbit h1 { margin: 17px 0 8px; font-size: clamp(33px, 9vw, 47px); }
+    .virus-orbit-copy > p { font-size: 12px; }
+    .virus-orbit-count { margin-top: 15px; }
+    .virus-orbit-count strong { font-size: 18px; }
+    .virus-orbit-meta { gap: 7px 12px; margin-top: 13px; font-size: 9px; }
+    .virus-orbit-copy .virus-updated { margin-top: 10px; }
+    .virus-globe-wrap { height: clamp(230px, 62vw, 330px); margin-top: -8px; }
+    .virus-globe { width: min(112%, 480px); }
+    .virus-orbit-caption { right: 4%; bottom: 8px; font-size: 8px; }
+    .virus-lead-section { padding-top: 19px; }
+    .virus-lead-card { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 19px; border-radius: 15px; }
+    .virus-lead-copy h2 { font-size: clamp(24px, 7vw, 31px); }
+    .virus-lead-copy > p { font-size: 12px; }
+    .virus-lead-copy .virus-story-meta { margin-top: 14px; padding-top: 0; }
+    .virus-lead-art { min-height: 136px; grid-row: 1; }
+    .lead-art-core { width: 75px; height: 75px; }
+    .lead-art-orbit { height: 95%; }
+    .virus-section { padding: 20px 0; }
+    .virus-section-heading { align-items: center; }
+    .virus-heading-title { gap: 9px; }
+    .virus-heading-title h2 { font-size: 17px; }
+    .virus-heading-title p { max-width: 250px; font-size: 9px; }
+    .virus-heading-icon { width: 28px; height: 28px; }
+    .virus-trending-grid { grid-auto-columns: minmax(170px, 68vw); grid-auto-flow: column; grid-template-columns: none; overflow-x: auto; padding: 1px 1px 9px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+    .virus-trending-card { scroll-snap-align: start; }
+    .trending-visual { height: 93px; }
+    .trending-visual-orbit { width: 97px; height: 97px; }
+    .trending-visual-core { width: 50px; height: 50px; }
+    .latest-heading { align-items: flex-start; flex-direction: column; }
+    .virus-latest-tools { width: 100%; }
+    .virus-source-select { width: 100%; }
+    .virus-source-select > input { height: 34px; }
+    .virus-category-nav { gap: 6px; margin-right: -15px; padding-right: 15px; }
+    .virus-category-nav > a { padding: 6px 10px; }
+    .virus-mark-read { display: none; }
+    .virus-latest-row { grid-template-columns: 9px minmax(0, 1fr) 58px; gap: 8px; padding: 15px 0; }
+    .virus-latest-row h3 { font-size: 13px; }
+    .virus-latest-row p { font-size: 10px; }
+    .latest-row-meta { gap: 5px; font-size: 8px; }
+    .latest-row-actions { gap: 0; }
+    .latest-row-actions .btn, .latest-open-link { width: 27px; height: 27px; }
+    .virus-empty-feed { padding: 23px 19px; }
+    .virus-footer { padding-bottom: 90px; }
+    .virus-bottom-nav { position: fixed; right: 10px; bottom: max(8px, env(safe-area-inset-bottom)); left: 10px; z-index: 45; display: grid; grid-template-columns: repeat(5, 1fr); min-height: 66px; padding: 7px 5px max(7px, env(safe-area-inset-bottom)); border: 1px solid rgba(94, 132, 175, .48); border-radius: 19px; background: rgba(4, 12, 21, .95); box-shadow: 0 8px 35px rgba(0, 0, 0, .42); backdrop-filter: blur(18px); }
+    .virus-bottom-nav a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: #aebdd1; font-size: 8px; text-decoration: none; }
+    .virus-bottom-nav a > span { height: 26px; color: #bbcde2; font-size: 23px; line-height: 1; }
+    .virus-bottom-nav a.is-active { color: #65b1ff; }
+    .virus-bottom-nav a.is-active > span { color: #55aaff; text-shadow: 0 0 13px rgba(65, 158, 255, .58); }
+}
+@media (max-width: 390px) {
+    .virus-brand small { max-width: 150px; }
+    .virus-header-tools { gap: 4px; }
+    .virus-orbit-meta { max-width: 340px; }
+    .virus-section-heading .virus-see-all { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .virus-home *, .virus-home *::before, .virus-home *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* Explore-first home: the Earth is the hero, with real stories directly below. */
+.virus-orbit-centered { min-height: 0; padding: 31px 0 20px; display: grid; grid-template-columns: 1fr; justify-items: center; text-align: center; }
+.virus-orbit-centered::before { background: radial-gradient(ellipse at 50% 52%, rgba(16, 79, 131, .2), transparent 51%); }
+.virus-orbit-centered .virus-orbit-copy { padding: 0; }
+.virus-orbit-centered h1 { margin: 16px 0 8px; font-size: clamp(24px, 4vw, 39px); letter-spacing: .055em; }
+.virus-orbit-centered .virus-globe-wrap { width: min(100%, 610px); height: clamp(220px, 31vw, 315px); margin: -2px auto -13px; }
+.virus-orbit-centered .virus-globe { width: min(100%, 410px); }
+.virus-orbit-centered .globe-grid { stroke: #bdcadd; stroke-opacity: .26; }
+.virus-orbit-centered .orbit-rings { stroke: #aab8cb; stroke-opacity: .15; }
+.globe-continents { stroke: #e0e7f2; stroke-opacity: .76; stroke-width: 1.05; filter: drop-shadow(0 0 2px rgba(191, 212, 238, .3)); }
+.globe-demo-pins circle { stroke: #07111e; stroke-width: 2; filter: drop-shadow(0 0 5px currentColor); }
+.globe-demo-pins .pin-breaking { fill: #ff5a64; color: #ff5a64; }
+.globe-demo-pins .pin-trending { fill: #ffb64f; color: #ffb64f; }
+.globe-demo-pins .pin-latest { fill: #5da6ff; color: #5da6ff; }
+.virus-orbit-centered .virus-orbit-caption { right: 50%; bottom: 0; transform: translateX(50%); white-space: nowrap; }
+.virus-orbit-summary { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.virus-orbit-summary .virus-orbit-count { margin: 0; flex-direction: row; align-items: baseline; gap: 7px; }
+.virus-orbit-summary .virus-orbit-count strong { font-size: 18px; }
+.virus-orbit-summary .virus-orbit-count span { color: #9aacc3; font-size: 12px; }
+.virus-orbit-summary .virus-orbit-meta { margin: 0; justify-content: center; }
+.virus-orbit-summary .virus-primary-button { min-width: 150px; justify-content: center; padding: 10px 19px; }
+.virus-orbit-summary .virus-updated { margin: 0; }
+.virus-orbit-summary { padding: 0 0 18px; }
+.virus-stats-strip { width: min(100%, 640px); margin: 0 auto; padding: 10px 0 17px; display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--virus-line); }
+.virus-stats-strip > div { min-width: 0; padding: 0 16px; display: flex; flex-direction: column; gap: 4px; text-align: center; }
+.virus-stats-strip > div + div { border-left: 1px solid rgba(122, 155, 193, .15); }
+.virus-stats-strip span { color: #8194aa; font-size: 10px; }
+.virus-stats-strip strong { overflow: hidden; color: #dbe7f4; font-size: 13px; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
+
+
+.explore-shell { width: min(100%, 980px); min-height: calc(100vh - 140px); margin: 0 auto; padding: 28px clamp(18px, 5vw, 64px) 90px; color: #e9eff8; }
+.explore-back { color: #89a5c3; font-size: 12px; text-decoration: none; }
+.explore-heading { max-width: 650px; margin: 48px auto 55px; text-align: center; }
+.explore-heading h1 { margin: 18px 0 10px; font-size: clamp(34px, 6vw, 56px); line-height: 1; letter-spacing: -.045em; }
+.explore-heading h1 em { color: #8ebaf0; font-style: normal; font-weight: 450; }
+.explore-heading > p { color: #9cacbf; font-size: 14px; }
+.explore-search { margin: 30px auto 0; text-align: left; }
+.explore-search label { display: block; margin: 0 0 9px 3px; color: #b1c2d7; font-size: 12px; }
+.explore-search > div { display: flex; gap: 8px; padding: 6px; border: 1px solid rgba(124, 163, 207, .32); border-radius: 14px; background: rgba(7, 18, 32, .82); }
+.explore-search input { min-width: 0; flex: 1; padding: 10px 12px; border: 0; outline: 0; color: #edf4ff; background: transparent; font: inherit; font-size: 14px; }
+.explore-search button { padding: 10px 17px; border: 1px solid rgba(83, 157, 255, .45); border-radius: 10px; color: #e9f4ff; background: #0d3156; font: inherit; font-size: 12px; cursor: pointer; }
+.explore-group { margin: 0 0 38px; }
+.explore-group-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 14px; }
+.explore-group-heading h2 { margin: 0; font-size: 19px; }
+.explore-group-heading > span,.explore-group-heading a { color: #8194aa; font-size: 11px; text-decoration: none; }
+.explore-topic-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 9px; }
+.explore-topic,.explore-source { border: 1px solid rgba(123, 156, 194, .2); border-radius: 12px; background: rgba(9, 22, 38, .72); color: #dce8f7; text-decoration: none; transition: border-color .16s, background .16s; }
+.explore-topic { min-height: 60px; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+.explore-topic:hover,.explore-source:hover { border-color: rgba(86, 162, 255, .58); background: rgba(18, 45, 74, .85); }
+.explore-topic span:last-child { color: #6e9ac6; }
+.explore-source-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 9px; }
+.explore-source { min-width: 0; padding: 12px; display: flex; align-items: center; gap: 11px; }
+.explore-source-mark { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; color: #a8cff9; background: #102946; font-size: 13px; }
+.explore-source > span:nth-child(2) { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.explore-source strong { overflow: hidden; color: #e1eaf5; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.explore-source small { color: #8194aa; font-size: 10px; }
+.explore-source-arrow { color: #7195bd; }
+.explore-empty { color: #96a8bc; font-size: 13px; }
+.explore-empty a { color: #8ec1ff; }
+.story-shell { width: min(100%, 920px); margin: 0 auto; padding: 28px clamp(18px, 5vw, 64px) 90px; color: #eaf0f8; }
+.story-detail { margin-top: 30px; padding: clamp(20px, 5vw, 48px); border: 1px solid rgba(122, 155, 193, .23); border-radius: 20px; background: rgba(5, 15, 27, .8); }
+.story-kicker,.story-meta { display: flex; flex-wrap: wrap; gap: 9px; color: #8ca0b9; font-size: 11px; }
+.story-kicker span:first-child { color: #80baff; }
+.story-detail > h1 { max-width: 760px; margin: 18px 0 14px; color: #f1f5fb; font-size: clamp(27px, 5vw, 46px); line-height: 1.1; letter-spacing: -.035em; }
+.story-meta { color: #a5b5c8; }
+.story-quick,.story-content,.story-tools > div { margin-top: 28px; padding-top: 22px; border-top: 1px solid rgba(122, 155, 193, .17); }
+.story-detail h2 { margin: 0 0 10px; color: #dbe6f3; font-size: 16px; }
+.story-quick p,.story-tools p { margin: 0; color: #a7b5c6; font-size: 14px; line-height: 1.7; }
+.story-content .border-base-300 { border-color: rgba(122, 155, 193, .18); }
+.story-content .bg-base-200 { color: #cbd7e5; background: #091523; }
+.story-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.story-tools > div { margin-top: 0; }
+.story-tools button,.story-tools a { display: inline-flex; margin-top: 13px; color: #8fbef0; font: inherit; font-size: 11px; text-decoration: none; }
+.story-tools button { padding: 7px 10px; border: 1px solid rgba(135, 157, 183, .2); border-radius: 8px; background: #101b28; }
+.story-source-link,.story-original-link { color: #8ebeff; font-size: 11px; text-decoration: none; }
+.story-source-link { display: inline-block; margin-top: 26px; }
+.virus-lead-actions .story-original-link { align-self: center; }
+
+@media (max-width: 680px) {
+    .virus-orbit-centered { padding-top: 21px; }
+    .virus-orbit-centered .virus-live { font-size: 9px; }
+    .virus-orbit-centered h1 { font-size: clamp(22px, 7vw, 31px); }
+    .virus-orbit-centered .virus-orbit-copy > p { font-size: 12px; }
+    .virus-orbit-centered .virus-globe-wrap { height: clamp(205px, 65vw, 275px); margin-top: 0; }
+    .virus-orbit-centered .virus-globe { width: min(100%, 350px); }
+    .virus-orbit-summary .virus-orbit-meta { gap: 6px 12px; font-size: 9px; }
+    .virus-stats-strip > div { padding: 0 6px; }
+    .virus-stats-strip span { font-size: 9px; }
+    .virus-stats-strip strong { font-size: 11px; }
+    .explore-heading { margin: 36px auto 42px; }
+    .explore-topic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .story-tools { grid-template-columns: 1fr; gap: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .virus-orbit-centered .virus-globe { animation: none !important; transition: none !important; }
+}
+/* Real images replace the prototype artwork; keep them free of decorative particles. */
+.virus-lead-art.article-photo::before,.virus-lead-art.article-photo::after,.trending-visual.article-photo::before{content:none!important}
+.virus-latest-row{grid-template-columns:132px minmax(0,1fr) 66px}
+@media(max-width:760px){.virus-latest-row{grid-template-columns:78px minmax(0,1fr) 52px}.latest-row-image{width:78px;aspect-ratio:1}}

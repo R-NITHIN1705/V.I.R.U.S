@@ -1,0 +1,44 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Shared\Controller;
+
+use App\Shared\AI\Service\ModelDiscoveryServiceInterface;
+use App\Shared\AI\Service\ModelQualityTrackerInterface;
+use App\Shared\AI\ValueObject\ModelQualityCategory;
+use Symfony\Bundle\FrameworkBundle\Controller\ControllerHelper;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+
+final class AiStatsController
+{
+    private const string PRIMARY_MODEL = 'openrouter/free';
+
+    public function __construct(
+        private readonly ControllerHelper $controller,
+        private readonly ModelQualityTrackerInterface $qualityTracker,
+        private readonly ModelDiscoveryServiceInterface $modelDiscovery,
+        private readonly string $blockedModels = '',
+        private readonly string $paidFallbackModel = '',
+    ) {
+    }
+
+    #[Route('/stats/ai', name: 'app_ai_stats')]
+    public function __invoke(): Response
+    {
+        $blockedList = $this->blockedModels !== ''
+            ? array_map('trim', explode(',', $this->blockedModels))
+            : [];
+
+        return $this->controller->render('stats/ai.html.twig', [
+            'enrichmentStats' => $this->qualityTracker->getStatsByCategory(ModelQualityCategory::Enrichment),
+            'chatStats' => $this->qualityTracker->getStatsByCategory(ModelQualityCategory::Chat),
+            'embeddingStats' => $this->qualityTracker->getStatsByCategory(ModelQualityCategory::Embedding),
+            'freeModels' => $this->modelDiscovery->discoverFreeModels(),
+            'primaryModel' => self::PRIMARY_MODEL,
+            'blockedModels' => $blockedList,
+            'paidFallbackModel' => $this->paidFallbackModel,
+        ]);
+    }
+}

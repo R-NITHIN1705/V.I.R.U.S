@@ -1,0 +1,13 @@
+{% for article in articles %}
+    {% include 'dashboard/_latest_story.html.twig' %}
+{% endfor %}
+{% if hasMore is defined %}
+    {% include 'components/_pagination_loader.html.twig' with {
+        currentPage: currentPage,
+        currentCategory: currentCategory|default(null),
+        currentSource: currentSource|default(null),
+        unreadOnly: unreadOnly|default(false),
+        bookmarkedOnly: bookmarkedOnly|default(false),
+        hasMore: hasMore,
+    } %}
+{% endif %}

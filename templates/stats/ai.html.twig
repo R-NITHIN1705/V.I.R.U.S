@@ -1,0 +1,162 @@
+{% extends 'base.html.twig' %}
+{% block title %}AI Model Stats{% endblock %}
+{% block body %}
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <h1 class="text-2xl font-bold">AI Model Statistics</h1>
+
+        <div class="flex items-center gap-3">
+            <span class="text-xs text-base-content/50" id="ai-stats-updated">
+                Updated <span id="ai-stats-updated-time">just now</span>
+            </span>
+
+            <label class="label cursor-pointer gap-2 py-0">
+                <span class="label-text text-xs">Auto-refresh</span>
+                <input type="checkbox" class="toggle toggle-sm" id="ai-stats-autorefresh" aria-label="Toggle auto-refresh every 30 seconds">
+            </label>
+
+            <button type="button" class="btn btn-sm btn-ghost gap-1" id="ai-stats-refresh-btn" aria-label="Refresh now">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="card bg-base-200 shadow-sm">
+            <div class="card-body p-4">
+                <h3 class="text-sm font-semibold text-base-content/70">Primary Model</h3>
+                <p class="font-mono text-sm">{{ primaryModel }}</p>
+            </div>
+        </div>
+
+        <div class="card bg-base-200 shadow-sm">
+            <div class="card-body p-4">
+                <h3 class="text-sm font-semibold text-base-content/70">Paid Fallback</h3>
+                <p class="font-mono text-sm">{{ paidFallbackModel ?: 'Not configured' }}</p>
+            </div>
+        </div>
+
+        <div class="card bg-base-200 shadow-sm">
+            <div class="card-body p-4">
+                <h3 class="text-sm font-semibold text-base-content/70">Blocked Models</h3>
+                {% if blockedModels is empty %}
+                    <p class="text-sm text-base-content/50">None</p>
+                {% else %}
+                    <div class="flex flex-wrap gap-1 mt-1">
+                        {% for model in blockedModels %}
+                            <span class="badge badge-error badge-sm font-mono">{{ model }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {{ _self.stats_table('Enrichment', enrichmentStats) }}
+    {{ _self.stats_table('Chat', chatStats) }}
+    {{ _self.stats_table('Embedding', embeddingStats) }}
+
+    <h2 class="text-xl font-bold mb-4">Available Free Models ({{ freeModels|length }})</h2>
+    {% if freeModels is empty %}
+        <div class="alert alert-warning">No free models discovered. Circuit breaker may be open or API unreachable.</div>
+    {% else %}
+        <div class="flex flex-wrap gap-2">
+            {% for model in freeModels %}
+                <span class="badge badge-outline">{{ model.value }}</span>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% macro stats_table(title, stats) %}
+        <h2 class="text-xl font-bold mb-4">{{ title }} Model Quality</h2>
+        {% if stats is empty %}
+            <div class="alert alert-info mb-6">No {{ title|lower }} model quality data yet.</div>
+        {% else %}
+            <div class="overflow-x-auto mb-8">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th>Model</th>
+                            <th>Accepted</th>
+                            <th>Rejected</th>
+                            <th>Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for model, data in stats %}
+                            <tr>
+                                <td class="font-mono text-sm">{{ model }}</td>
+                                <td>{{ data.accepted }}</td>
+                                <td>{{ data.rejected }}</td>
+                                <td>
+                                    <div class="flex items-center gap-2">
+                                        <progress class="progress {{ data.acceptanceRate > 0.7 ? 'progress-success' : (data.acceptanceRate > 0.4 ? 'progress-warning' : 'progress-error') }} w-20" value="{{ (data.acceptanceRate * 100)|round }}" max="100"></progress>
+                                        <span class="text-sm">{{ (data.acceptanceRate * 100)|round(1) }}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    {% endmacro %}
+
+    <script>
+        (function () {
+            const STORAGE_KEY = 'ai-stats-autorefresh';
+            const REFRESH_MS = 30000;
+            const toggle = document.getElementById('ai-stats-autorefresh');
+            const refreshBtn = document.getElementById('ai-stats-refresh-btn');
+            const updatedTime = document.getElementById('ai-stats-updated-time');
+            let intervalId = null;
+
+            function formatNow() {
+                const d = new Date();
+                return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+
+            function startAutoRefresh() {
+                if (intervalId) return;
+                intervalId = setInterval(() => window.location.reload(), REFRESH_MS);
+            }
+
+            function stopAutoRefresh() {
+                if (!intervalId) return;
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+
+            let enabled = false;
+            try {
+                enabled = localStorage.getItem(STORAGE_KEY) === 'true';
+            } catch (e) {}
+
+            if (toggle) {
+                toggle.checked = enabled;
+                if (enabled) startAutoRefresh();
+
+                toggle.addEventListener('change', () => {
+                    try {
+                        localStorage.setItem(STORAGE_KEY, String(toggle.checked));
+                    } catch (e) {}
+                    if (toggle.checked) {
+                        startAutoRefresh();
+                    } else {
+                        stopAutoRefresh();
+                    }
+                });
+            }
+
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => window.location.reload());
+            }
+
+            if (updatedTime) {
+                updatedTime.textContent = formatNow();
+            }
+        })();
+    </script>
+{% endblock %}

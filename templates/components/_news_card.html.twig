@@ -1,0 +1,16 @@
+{# Contextual card renderer: primary, trending, compact, live, historical. #}
+{% if variant == 'primary' %}
+    {% include 'dashboard/_lead_story.html.twig' with {article: article, readArticleIds: readArticleIds|default([]), bookmarkedArticleIds: bookmarkedArticleIds|default([])} only %}
+{% elseif variant == 'trending' %}
+    {% include 'dashboard/_trending_story.html.twig' with {article: article, readArticleIds: readArticleIds|default([]), bookmarkedArticleIds: bookmarkedArticleIds|default([])} only %}
+{% elseif variant == 'compact' %}
+    {% include 'dashboard/_latest_story.html.twig' with {article: article, readArticleIds: readArticleIds|default([]), bookmarkedArticleIds: bookmarkedArticleIds|default([])} only %}
+{% elseif variant == 'live' %}
+    {% include 'components/topic_hub/_live_event_card.html.twig' with {event: event, providerName: providerName, sectionKey: sectionKey|default('live')} only %}
+{% elseif variant == 'historical' %}
+    {% if article is defined %}
+        {% include 'components/_article_card.html.twig' with {article: article, variant: 'historical', readArticleIds: readArticleIds|default([]), bookmarkedArticleIds: bookmarkedArticleIds|default([])} only %}
+    {% else %}
+        {% include 'search/_external_card.html.twig' with {result: result, variant: 'historical'} only %}
+    {% endif %}
+{% endif %}

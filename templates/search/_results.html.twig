@@ -1,0 +1,27 @@
+{% if notice %}<div class="alert alert-info search-notice" role="status">{{ notice }}</div>{% endif %}
+{% if query %}
+    {% set totalResults = localArticles|length + externalResults|length %}
+    <p class="search-result-count" role="status">{{ totalResults }} {{ totalResults == 1 ? 'story' : 'stories' }} for “{{ query }}”{% if historical %} · grouped by date{% endif %}</p>
+    {% if totalResults == 0 %}
+        {% include 'components/_empty_state.html.twig' with {message: 'No stories found for this search. Try a broader keyword or a different date range.'} %}
+    {% elseif historical and history is not empty %}
+        {% for year, months in history %}
+            <section class="history-year" aria-labelledby="history-year-{{ year }}"><h2 id="history-year-{{ year }}">{{ year }}</h2>
+                {% for month, days in months %}
+                    <div class="history-month"><h3>{{ (year ~ '-' ~ month ~ '-01')|date('F') }}</h3>
+                        {% for day, stories in days %}
+                            <section class="history-day"><h4>{{ (year ~ '-' ~ month ~ '-' ~ day)|date('l, F j') }}</h4><div class="search-result-list">
+                                {% for record in stories %}
+                                    {% if record.article is defined %}{% set article = record.article %}{% include 'components/_news_card.html.twig' with {variant: 'historical', article: article} only %}{% else %}{% include 'components/_news_card.html.twig' with {variant: 'historical', result: record.external} only %}{% endif %}
+                                {% endfor %}
+                            </div></section>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </section>
+        {% endfor %}
+    {% else %}
+        {% if localArticles is not empty %}<section class="search-result-list" aria-label="Stories from your connected sources">{% for article in localArticles %}{% include 'components/_article_card.html.twig' %}{% endfor %}</section>{% endif %}
+        {% if externalResults is not empty %}<section class="search-result-list external-results" aria-label="Recent global coverage">{% for result in externalResults %}{% include 'search/_external_card.html.twig' %}{% endfor %}</section>{% endif %}
+    {% endif %}
+{% endif %}

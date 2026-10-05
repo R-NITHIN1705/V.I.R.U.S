@@ -1,0 +1,413 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Chat - News Assistant{% endblock %}
+
+{% block stylesheets %}
+<style>
+    /* Fix DaisyUI chat bubbles: override grid layout to prevent width issues on mobile */
+    #chat-messages .chat {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    #chat-messages .chat-end {
+        align-items: flex-end !important;
+    }
+    #chat-messages .chat-start {
+        align-items: flex-start !important;
+    }
+    #chat-messages .chat-end .chat-bubble {
+        max-width: 85%;
+    }
+    #chat-messages .chat-bubble {
+        width: auto !important;
+        max-width: 100% !important;
+        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+        min-width: 0 !important;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="flex flex-col h-[calc(100vh-4rem)] max-w-3xl mx-auto">
+    <div class="flex items-center justify-between mb-2 flex-shrink-0">
+        <h1 class="text-2xl font-bold">News Assistant</h1>
+        <div class="flex gap-2">
+            <div class="dropdown dropdown-end">
+                <label tabindex="0" id="chat-history-btn" class="btn btn-outline btn-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    History
+                </label>
+                <ul tabindex="0" id="chat-history-list" class="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-72 max-h-64 overflow-y-auto">
+                    <li class="text-base-content/50 text-center text-sm p-2">Loading...</li>
+                </ul>
+            </div>
+            <button id="chat-new" class="btn btn-outline btn-sm">New Conversation</button>
+        </div>
+    </div>
+
+    <div id="chat-messages" class="flex-1 min-h-0 bg-base-200 rounded-box p-4 overflow-y-auto mb-2 space-y-4">
+        <div id="chat-empty" class="text-base-content/50 text-center py-16">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <p class="text-lg font-medium">Ask me anything about your news articles.</p>
+            <p class="text-sm mt-1">I can search, summarize, and compare articles from your feeds.</p>
+        </div>
+    </div>
+
+    <form id="chat-form" class="flex gap-2 pb-2 flex-shrink-0">
+        <textarea id="chat-input" name="message"
+            placeholder="Ask about your articles... (Shift+Enter for new line)"
+            class="textarea textarea-bordered flex-1 min-h-[48px] max-h-[120px] resize-none leading-normal"
+            rows="1" autocomplete="off" required></textarea>
+        <button type="submit" id="chat-submit" class="btn btn-primary self-end">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+        </button>
+    </form>
+</div>
+
+<script>
+(function() {
+    const messagesEl = document.getElementById('chat-messages');
+    const emptyEl = document.getElementById('chat-empty');
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('chat-input');
+    const submitBtn = document.getElementById('chat-submit');
+    const newBtn = document.getElementById('chat-new');
+    let conversationId = null;
+    let isStreaming = false;
+
+    function autoResizeInput() {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    }
+    input.addEventListener('input', autoResizeInput);
+
+    function scrollToBottom() {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function hideEmpty() {
+        if (emptyEl) emptyEl.style.display = 'none';
+    }
+
+    function showEmpty() {
+        if (emptyEl) emptyEl.style.display = '';
+    }
+
+    function createBubble(role, content) {
+        hideEmpty();
+        const wrapper = document.createElement('div');
+        wrapper.className = role === 'user' ? 'chat chat-end' : 'chat chat-start';
+
+        const header = document.createElement('div');
+        header.className = 'chat-header text-xs opacity-60 mb-0.5';
+        header.textContent = role === 'user' ? 'You' : 'Assistant';
+
+        const bubble = document.createElement('div');
+        bubble.className = role === 'user'
+            ? 'chat-bubble chat-bubble-primary whitespace-pre-wrap break-words'
+            : 'chat-bubble chat-bubble-secondary whitespace-pre-wrap break-words';
+
+        if (content) bubble.textContent = content;
+
+        wrapper.appendChild(header);
+        wrapper.appendChild(bubble);
+        messagesEl.appendChild(wrapper);
+        scrollToBottom();
+        return { wrapper, bubble };
+    }
+
+    function createTypingIndicator() {
+        const { wrapper, bubble } = createBubble('assistant', '');
+        bubble.innerHTML = '<span class="loading loading-dots loading-sm"></span> <span id="typing-status" class="text-xs opacity-70"></span>';
+        wrapper.id = 'typing-indicator';
+        return wrapper;
+    }
+
+    function updateTypingStatus(text) {
+        const el = document.getElementById('typing-status');
+        if (el) el.textContent = text;
+    }
+
+    function removeTypingIndicator() {
+        const el = document.getElementById('typing-indicator');
+        if (el) el.remove();
+    }
+
+    function renderCitedArticles(articles, parentWrapper) {
+        if (!articles || articles.length === 0) return;
+
+        const container = document.createElement('div');
+        container.className = 'mt-2 space-y-1';
+
+        const label = document.createElement('div');
+        label.className = 'text-xs opacity-50 mb-1';
+        label.textContent = 'Sources:';
+        container.appendChild(label);
+
+        articles.forEach(function(article) {
+            const card = document.createElement('a');
+            card.href = article.url;
+            card.target = '_blank';
+            card.rel = 'noopener';
+            card.className = 'block p-2 bg-base-100 rounded-lg hover:bg-base-300 transition-colors text-sm';
+
+            const titleRow = document.createElement('div');
+            titleRow.className = 'flex items-center gap-1.5';
+
+            const title = document.createElement('span');
+            title.className = 'font-medium text-xs link link-hover truncate';
+            title.textContent = article.title;
+            titleRow.appendChild(title);
+
+            if (article.searchSource) {
+                const badge = document.createElement('span');
+                const badgeColors = {
+                    keyword: 'badge-info',
+                    semantic: 'badge-secondary',
+                    hybrid: 'badge-accent'
+                };
+                badge.className = 'badge badge-xs shrink-0 ' + (badgeColors[article.searchSource] || 'badge-ghost');
+                badge.textContent = article.searchSource;
+                titleRow.appendChild(badge);
+            }
+
+            card.appendChild(titleRow);
+
+            if (article.summary) {
+                const summary = document.createElement('div');
+                summary.className = 'text-xs opacity-60 line-clamp-2 mt-0.5';
+                summary.textContent = article.summary;
+                card.appendChild(summary);
+            }
+
+            container.appendChild(card);
+        });
+
+        parentWrapper.appendChild(container);
+    }
+
+    function setLoading(loading) {
+        isStreaming = loading;
+        submitBtn.disabled = loading;
+        if (loading) {
+            submitBtn.innerHTML = '<span class="loading loading-spinner loading-sm"></span>';
+        } else {
+            submitBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>';
+        }
+    }
+
+    async function sendMessage(message) {
+        createBubble('user', message);
+        setLoading(true);
+        createTypingIndicator();
+
+        // Generate conversationId client-side if needed
+        if (!conversationId) {
+            conversationId = crypto.randomUUID().replace(/-/g, '');
+        }
+
+        // 1. Subscribe to Mercure topic FIRST (before POST, so we don't miss early events)
+        // Use current origin — the Mercure hub runs on the same host via FrankenPHP/Caddy
+        const url = new URL(window.location.origin + '/.well-known/mercure');
+        url.searchParams.append('topic', '/chat/' + conversationId);
+
+        const eventSource = new EventSource(url.toString());
+        let fullText = '';
+        let assistantBubble = null;
+        let assistantWrapper = null;
+        let citedArticles = [];
+
+        eventSource.addEventListener('status', function(e) {
+            const data = JSON.parse(e.data);
+            updateTypingStatus(data.text || '');
+            scrollToBottom();
+        });
+
+        eventSource.addEventListener('token', function(e) {
+            const data = JSON.parse(e.data);
+            if (!assistantBubble) {
+                removeTypingIndicator();
+                const created = createBubble('assistant', '');
+                assistantWrapper = created.wrapper;
+                assistantBubble = created.bubble;
+            }
+            fullText += data.text;
+            assistantBubble.textContent = fullText;
+            scrollToBottom();
+        });
+
+        eventSource.addEventListener('done', function(e) {
+            const data = JSON.parse(e.data);
+            citedArticles = data.citedArticles || [];
+            eventSource.close();
+
+            removeTypingIndicator();
+            if (!assistantBubble) {
+                const created = createBubble('assistant', fullText || 'No response received.');
+                assistantWrapper = created.wrapper;
+            } else if (fullText === '') {
+                assistantBubble.textContent = 'No response received.';
+            }
+            if (assistantWrapper) {
+                renderCitedArticles(citedArticles, assistantWrapper);
+            }
+            setLoading(false);
+            input.focus();
+        });
+
+        eventSource.addEventListener('stream_error', function(e) {
+            const data = JSON.parse(e.data);
+            eventSource.close();
+            removeTypingIndicator();
+            if (!assistantBubble) {
+                createBubble('assistant', 'Error: ' + (data.message || 'Stream failed'));
+            } else {
+                assistantBubble.textContent = 'Error: ' + (data.message || 'Stream failed');
+            }
+            setLoading(false);
+            input.focus();
+        });
+
+        // 2. Small delay to ensure Mercure subscription is established
+        await new Promise(function(r) { setTimeout(r, 100); });
+
+        // 3. Send message via POST (blocks server-side while streaming tokens to Mercure)
+        try {
+            const response = await fetch('/chat/stream', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message, conversationId: conversationId }),
+            });
+
+            if (!response.ok) {
+                eventSource.close();
+                removeTypingIndicator();
+                const errData = await response.json().catch(function() { return {}; });
+                if (!assistantBubble) {
+                    createBubble('assistant', 'Error: ' + (errData.error || 'Something went wrong'));
+                }
+                setLoading(false);
+            }
+        } catch (err) {
+            eventSource.close();
+            removeTypingIndicator();
+            if (!assistantBubble) {
+                createBubble('assistant', 'Error: Connection failed. Please try again.');
+            }
+            setLoading(false);
+            input.focus();
+        }
+    }
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const message = input.value.trim();
+        if (!message || isStreaming) return;
+        input.value = '';
+        autoResizeInput();
+        sendMessage(message);
+    });
+
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            form.dispatchEvent(new Event('submit'));
+        }
+    });
+
+    newBtn.addEventListener('click', function() {
+        if (isStreaming) return;
+        conversationId = null;
+        messagesEl.innerHTML = '';
+        messagesEl.appendChild(emptyEl);
+        showEmpty();
+        input.focus();
+    });
+
+    // Conversation history
+    const historyBtn = document.getElementById('chat-history-btn');
+    const historyList = document.getElementById('chat-history-list');
+
+    function formatTimestamp(ts) {
+        const d = new Date(ts * 1000);
+        const now = new Date();
+        const diffMs = now.getTime() - d.getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        if (diffMins < 60) return diffMins + 'm ago';
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return diffHours + 'h ago';
+        const diffDays = Math.floor(diffHours / 24);
+        return diffDays + 'd ago';
+    }
+
+    async function loadConversations() {
+        historyList.innerHTML = '<li class="text-base-content/50 text-center text-sm p-2">Loading...</li>';
+        try {
+            const resp = await fetch('/chat/conversations');
+            const data = await resp.json();
+            if (!Array.isArray(data) || data.length === 0) {
+                historyList.innerHTML = '<li class="text-base-content/50 text-center text-sm p-2">No conversations yet</li>';
+                return;
+            }
+            historyList.innerHTML = '';
+            data.forEach(function(conv) {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.className = 'flex flex-col gap-0.5 py-1.5';
+                const preview = document.createElement('span');
+                preview.className = 'text-sm truncate';
+                preview.textContent = conv.preview || '(empty)';
+                const time = document.createElement('span');
+                time.className = 'text-xs opacity-50';
+                time.textContent = formatTimestamp(conv.lastMessageAt);
+                a.appendChild(preview);
+                a.appendChild(time);
+                a.addEventListener('click', function() {
+                    loadConversation(conv.conversationId);
+                    document.activeElement.blur();
+                });
+                li.appendChild(a);
+                historyList.appendChild(li);
+            });
+        } catch (err) {
+            historyList.innerHTML = '<li class="text-base-content/50 text-center text-sm p-2">Failed to load</li>';
+        }
+    }
+
+    async function loadConversation(id) {
+        if (isStreaming) return;
+        try {
+            const resp = await fetch('/chat/history/' + encodeURIComponent(id));
+            const data = await resp.json();
+            conversationId = data.conversationId;
+            messagesEl.innerHTML = '';
+            messagesEl.appendChild(emptyEl);
+            if (data.messages && data.messages.length > 0) {
+                hideEmpty();
+                data.messages.forEach(function(msg) {
+                    createBubble(msg.role, msg.content);
+                });
+            } else {
+                showEmpty();
+            }
+            input.focus();
+        } catch (err) {
+            // silently fail
+        }
+    }
+
+    historyBtn.addEventListener('click', function() {
+        loadConversations();
+    });
+
+    input.focus();
+})();
+</script>
+{% endblock %}
